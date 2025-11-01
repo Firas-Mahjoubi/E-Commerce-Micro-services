@@ -1,17 +1,15 @@
 package com.esprit.microservice.inventoryservice.dto;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class InventoryResponse {
+public class InventoryRequest {
     private String skuCode;
-    private boolean isInStock;
-    private Integer availableQuantity;
+    private Integer quantity;
 }
