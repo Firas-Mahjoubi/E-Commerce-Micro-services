@@ -1,4 +1,22 @@
-# Ignore MySQL runtime files
-volume-data/mysql_keycloak_data/*.sock
-volume-data/mysql_keycloak_data/*.index
-volume-data/mysql_keycloak_data/ib_*
+# Ignore volume-data directory completely
+volume-data/
+
+# Ignore Keycloak distribution files
+keycloak-*.zip
+keycloak-*/
+
+# Ignore build artifacts
+**/target/
+**/build/
+*.jar
+*.war
+*.ear
+*.class
+
+# Ignore IDE files
+.idea/
+*.iml
+.vscode/
+.DS_Store
+*.swp
+*.swo
