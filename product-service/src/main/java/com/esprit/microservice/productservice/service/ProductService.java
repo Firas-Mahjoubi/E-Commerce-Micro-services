@@ -2,11 +2,14 @@ package com.esprit.microservice.productservice.service;
 
 import com.esprit.microservice.productservice.dto.ProductRequest;
 import com.esprit.microservice.productservice.dto.ProductResponse;
+import com.esprit.microservice.productservice.event.ProductPlacedEvent;
 import com.esprit.microservice.productservice.model.Product;
 import com.esprit.microservice.productservice.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.kafka.core.KafkaTemplate;
+
 
 import java.util.List;
 
@@ -15,8 +18,7 @@ import java.util.List;
 @Slf4j
 public class ProductService {
     private final ProductRepository productRepository;
-
-
+    private final KafkaTemplate<String,ProductPlacedEvent> kafkaTemplate;
 
     public void createProduct(ProductRequest productRequest) {
         Product product = Product.builder()
@@ -25,7 +27,9 @@ public class ProductService {
                 .price(productRequest.getPrice())
                 .build();
         productRepository.save(product);
+        kafkaTemplate.send("notificationTopic", new ProductPlacedEvent(product.getId()));
         log.info("Product {} is saved", product.getId());
+
     }
     public List<ProductResponse> getAllProducts() {
         List<Product> products = productRepository.findAll();
