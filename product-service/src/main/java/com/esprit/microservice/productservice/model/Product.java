@@ -30,4 +30,5 @@ public class Product {
     private Boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String sellerId;
 }

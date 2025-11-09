@@ -27,4 +27,5 @@ public class ProductResponse {
     private Boolean inStock;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String sellerId;
 }

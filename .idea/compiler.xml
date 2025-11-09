@@ -13,7 +13,7 @@
         <module name="eureka-server" />
         <module name="review-service" />
       </profile>
-      <profile name="Annotation profile for voucher-service" enabled="true">
+      <profile name="Annotation profile for refund-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -24,6 +24,7 @@
         <module name="voucher-service" />
         <module name="product-service" />
         <module name="inventory-service" />
+        <module name="refund-service" />
       </profile>
     </annotationProcessing>
   </component>
@@ -35,6 +36,7 @@
       <module name="eureka-server" options="-parameters" />
       <module name="inventory-service" options="-parameters" />
       <module name="product-service" options="-parameters" />
+      <module name="refund-service" options="-parameters" />
       <module name="review-service" options="-parameters" />
       <module name="voucher-service" options="-parameters" />
     </option>
