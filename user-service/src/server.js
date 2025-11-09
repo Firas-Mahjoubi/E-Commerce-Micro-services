@@ -9,6 +9,7 @@ const keycloakConfig = require('./config/keycloak.config');
 const keycloakMiddleware = require('./middleware/keycloak.middleware');
 const errorHandler = require('./middleware/error.middleware');
 const logger = require('./utils/logger');
+const { initEureka, setupGracefulShutdown } = require('./config/eureka.config');
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -93,36 +94,40 @@ const startServer = async () => {
     logger.info('✅ Database connection established successfully');
 
     // Sync database models
-    await db.sequelize.sync({ alter: true });
+    await db.sequelize.sync({ force: false });
     logger.info('✅ Database models synchronized');
 
     // Start server
-    app.listen(PORT, () => {
-      logger.info(`🚀 User Service is running on port ${PORT}`);
-      logger.info(`📍 Environment: ${process.env.NODE_ENV}`);
-      logger.info(`🔐 Keycloak URL: ${process.env.KEYCLOAK_URL}`);
-      logger.info(`🏛️  Keycloak Realm: ${process.env.KEYCLOAK_REALM}`);
-      logger.info(`📊 Database: ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
+    app.listen(PORT, async () => {
+      logger.info(`🚀 User Service started on port ${PORT}`);
+      logger.info(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      logger.info(`🔐 Keycloak: ${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}`);
+      logger.info(`🗄️  Database: ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
+
+      // Register with Eureka if enabled
+      if (process.env.EUREKA_ENABLED === 'true') {
+        try {
+          await initEureka();
+          logger.info('✅ Registered with Eureka Discovery Server');
+          setupGracefulShutdown();
+        } catch (error) {
+          logger.error(`❌ Failed to register with Eureka: ${error.message}`);
+          logger.warn('⚠️ Service will continue without Eureka registration');
+        }
+      } else {
+        logger.info('ℹ️  Eureka registration is disabled');
+      }
+
+      logger.info('✅ User Service is ready to accept requests');
     });
   } catch (error) {
-    logger.error('❌ Failed to start server:', error);
+    logger.error(`❌ Failed to start server: ${error.message}`);
     process.exit(1);
   }
 };
 
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  logger.info('SIGTERM signal received: closing HTTP server');
-  await db.sequelize.close();
-  process.exit(0);
-});
-
-process.on('SIGINT', async () => {
-  logger.info('SIGINT signal received: closing HTTP server');
-  await db.sequelize.close();
-  process.exit(0);
-});
-
+// Start the server
 startServer();
 
 module.exports = app;
+
