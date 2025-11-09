@@ -8,18 +8,18 @@ module.exports = (sequelize, DataTypes) => {
     keycloak_id: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: 'keycloak_id_unique',
       comment: 'Keycloak user ID (sub)'
     },
     username: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true
+      unique: 'username_unique'
     },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: 'email_unique',
       validate: {
         isEmail: true
       }
@@ -61,21 +61,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     tableName: 'users',
     timestamps: true,
-    underscored: true,
-    indexes: [
-      {
-        unique: true,
-        fields: ['keycloak_id']
-      },
-      {
-        unique: true,
-        fields: ['email']
-      },
-      {
-        unique: true,
-        fields: ['username']
-      }
-    ]
+    underscored: true
   });
 
   return User;

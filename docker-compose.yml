@@ -79,7 +79,19 @@ services:
   # -------------------------------
   # MongoDB
   # -------------------------------
-
+  mongodb:
+    image: mongo:4.4.6
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - ecommerce-net
 
 # -------------------------------
 # Networks & Volumes
@@ -89,3 +101,4 @@ networks:
     driver: bridge
 volumes:
   postgres_data:
+  mongodb_data:
