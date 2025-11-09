@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
     user_id: {
       type: DataTypes.UUID,
       allowNull: false,
-      unique: true,
+      unique: 'user_profile_user_id_unique',
       references: {
         model: 'users',
         key: 'id'

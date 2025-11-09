@@ -20,6 +20,10 @@ public class SecurityConfig {
                 .authorizeExchange(exchange ->
                         exchange.pathMatchers("/eureka/**")
                                 .permitAll()
+                                .pathMatchers("/api/auth/**")  // Allow unauthenticated access to auth endpoints
+                                .permitAll()
+                                .pathMatchers("/api/health/**")  // Allow health check endpoints
+                                .permitAll()
                                 .anyExchange()
                                 .authenticated())
                 .oauth2ResourceServer(spec -> spec.jwt(Customizer.withDefaults()));
