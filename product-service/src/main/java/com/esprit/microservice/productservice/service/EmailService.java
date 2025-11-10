@@ -3,7 +3,6 @@ package com.esprit.microservice.productservice.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -19,11 +18,17 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.username:}")
     private String fromEmail;
 
     @Async
     public void sendProductAddedNotification(String sellerEmail, String productName, String productId) {
+        // Check if email is configured
+        if (fromEmail == null || fromEmail.isEmpty()) {
+            log.warn("Email notifications are disabled. To enable, set EMAIL_USERNAME and EMAIL_PASSWORD environment variables.");
+            return;
+        }
+
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -39,6 +44,8 @@ public class EmailService {
             log.info("Product added notification email sent to: {}", sellerEmail);
         } catch (MessagingException e) {
             log.error("Failed to send product added notification email to: {}", sellerEmail, e);
+        } catch (Exception e) {
+            log.error("Unexpected error while sending email to: {}. Error: {}", sellerEmail, e.getMessage());
         }
     }
 
