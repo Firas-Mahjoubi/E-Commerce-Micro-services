@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '@core/services/auth.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin-navbar',
@@ -279,7 +279,16 @@ export class AdminNavbarComponent {
 
   logout(): void {
     if (confirm('Are you sure you want to logout?')) {
-      this.authService.logout();
+      this.closeDropdown();
+      this.authService.logout().subscribe({
+        next: () => {
+          console.log('Logout successful');
+        },
+        error: (err) => {
+          console.error('Logout error (but clearing local data):', err);
+          // Navigation already handled in authService.clearAuthData()
+        }
+      });
     }
   }
 }

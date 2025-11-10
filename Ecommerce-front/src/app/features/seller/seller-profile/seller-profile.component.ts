@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { SellerNavbarComponent } from '../../../shared/components/seller-navbar/seller-navbar.component';
 
 interface User {
   id: string;
@@ -19,7 +18,7 @@ interface User {
 @Component({
   selector: 'app-seller-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, SellerNavbarComponent],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './seller-profile.component.html',
   styleUrls: ['./seller-profile.component.css']
 })

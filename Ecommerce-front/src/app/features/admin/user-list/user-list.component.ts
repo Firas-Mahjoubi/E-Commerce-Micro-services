@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminService, User } from '../../../core/services/admin.service';
 
@@ -16,6 +16,8 @@ export class UserListComponent implements OnInit {
   filteredUsers: User[] = [];
   loading = true;
   error = '';
+  pageTitle = 'User Management';
+  pageSubtitle = 'View and manage all user accounts';
   
   // Filters
   searchTerm = '';
@@ -29,10 +31,23 @@ export class UserListComponent implements OnInit {
 
   constructor(
     private adminService: AdminService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
+    // Check the current route to set the default role filter
+    const url = this.router.url;
+    if (url.includes('/admin/customers')) {
+      this.roleFilter = 'customer';
+      this.pageTitle = 'Customer Management';
+      this.pageSubtitle = 'View and manage customer accounts';
+    } else if (url.includes('/admin/sellers')) {
+      this.roleFilter = 'seller';
+      this.pageTitle = 'Seller Management';
+      this.pageSubtitle = 'View and manage seller accounts';
+    }
+    
     this.loadUsers();
   }
 

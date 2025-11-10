@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { SellerNavbarComponent } from '../../../shared/components/seller-navbar/seller-navbar.component';
 
 interface Product {
   id?: string;
@@ -22,7 +21,7 @@ interface Product {
 @Component({
   selector: 'app-edit-product',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, SellerNavbarComponent],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './edit-product.component.html',
   styleUrls: ['./edit-product.component.css']
 })

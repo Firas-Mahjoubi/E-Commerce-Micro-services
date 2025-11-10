@@ -147,12 +147,6 @@ public class ProductService {
         
         log.info("Product {} is deleted", id);
     }
-    public List<ProductResponse> getProductsBySeller(String sellerId) {
-        List<Product> products = productRepository.findBySellerId(sellerId);
-        return products.stream()
-                .map(this::mapToProductResponse)
-                .collect(Collectors.toList());
-    }
 
     // ADVANCED - Get active products only
     public List<ProductResponse> getActiveProducts() {
@@ -179,6 +173,18 @@ public class ProductService {
         List<Product> products = productRepository.findAll().stream()
                 .filter(p -> p.getStockQuantity() != null && p.getStockQuantity() < threshold)
                 .collect(Collectors.toList());
+        return products.stream()
+                .map(this::mapToProductResponseWithInventory)
+                .collect(Collectors.toList());
+    }
+
+    // READ - Get products by seller ID
+    public List<ProductResponse> getProductsBySeller(String sellerId) {
+        log.info("Fetching products for seller: {}", sellerId);
+        List<Product> products = productRepository.findAll().stream()
+                .filter(p -> p.getSellerId() != null && p.getSellerId().equals(sellerId))
+                .collect(Collectors.toList());
+        log.info("Found {} products for seller {}", products.size(), sellerId);
         return products.stream()
                 .map(this::mapToProductResponseWithInventory)
                 .collect(Collectors.toList());

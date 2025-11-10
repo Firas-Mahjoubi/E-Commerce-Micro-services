@@ -2,7 +2,6 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { SellerNavbarComponent } from '../../../shared/components/seller-navbar/seller-navbar.component';
 
 interface Product {
   id: string;
@@ -22,7 +21,7 @@ interface Product {
 @Component({
   selector: 'app-seller-product-detail',
   standalone: true,
-  imports: [CommonModule, SellerNavbarComponent],
+  imports: [CommonModule],
   templateUrl: './product-detail.component.html',
   styleUrls: ['./product-detail.component.css']
 })

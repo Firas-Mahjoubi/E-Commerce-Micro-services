@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { SellerNavbarComponent } from '../../../shared/components/seller-navbar/seller-navbar.component';
 
 interface Product {
   id?: string;
@@ -21,7 +20,7 @@ interface Product {
 @Component({
   selector: 'app-seller-products',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, SellerNavbarComponent],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './seller-products.component.html',
   styleUrls: ['./seller-products.component.css']
 })
@@ -43,16 +42,44 @@ export class SellerProductsComponent implements OnInit {
   }
 
   loadProducts() {
-    this.http.get<Product[]>('http://localhost:8090/api/product')
+    // Get seller's Keycloak ID from localStorage
+    const user = localStorage.getItem('user');
+    const currentUser = localStorage.getItem('current_user');
+    let sellerId = '';
+    
+    console.log('[Products] Checking localStorage for user...');
+    console.log('[Products] user key:', user);
+    console.log('[Products] current_user key:', currentUser);
+    
+    // Try both possible keys
+    const userDataStr = user || currentUser;
+    if (userDataStr) {
+      const userData = JSON.parse(userDataStr);
+      console.log('[Products] Parsed user data:', userData);
+      sellerId = userData.id || userData.keycloak_id || userData.sub || '';
+      console.log('[Products] Extracted seller ID:', sellerId);
+    }
+
+    if (!sellerId) {
+      console.error('[Products] No seller ID found in localStorage');
+      console.error('[Products] Available localStorage keys:', Object.keys(localStorage));
+      this.isLoading = false;
+      return;
+    }
+
+    console.log('[Products] Fetching products for seller:', sellerId);
+    // Fetch products for this specific seller
+    this.http.get<Product[]>(`http://localhost:8090/api/product/seller/${sellerId}`)
       .subscribe({
         next: (products) => {
+          console.log('[Products] Loaded seller products:', products);
           this.products = products;
           this.filteredProducts = products;
           this.extractCategories();
           this.isLoading = false;
         },
         error: (error) => {
-          console.error('Error loading products:', error);
+          console.error('[Products] Error loading seller products:', error);
           this.isLoading = false;
         }
       });
