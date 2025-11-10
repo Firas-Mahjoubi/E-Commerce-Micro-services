@@ -1,0 +1,187 @@
+<div class="admin-dashboard">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <div>
+        <h1>Admin Dashboard</h1>
+        <p class="subtitle">Manage users and monitor system activity</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" routerLink="/admin/users/create">
+          <i class="fas fa-user-plus"></i>
+          Create Seller Account
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-message">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ error }}
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading && !error" class="dashboard-content">
+    <!-- Statistics Grid -->
+    <div class="stats-grid">
+      <!-- Total Users -->
+      <div class="stat-card">
+        <div class="stat-icon total-users">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ stats.totalUsers }}</h3>
+          <p>Total Users</p>
+        </div>
+      </div>
+
+      <!-- Customers -->
+      <div class="stat-card">
+        <div class="stat-icon customers">
+          <i class="fas fa-shopping-cart"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ stats.totalCustomers }}</h3>
+          <p>Customers</p>
+        </div>
+      </div>
+
+      <!-- Sellers -->
+      <div class="stat-card">
+        <div class="stat-icon sellers">
+          <i class="fas fa-store"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ stats.totalSellers }}</h3>
+          <p>Sellers</p>
+        </div>
+      </div>
+
+      <!-- Admins -->
+      <div class="stat-card">
+        <div class="stat-icon admins">
+          <i class="fas fa-user-shield"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ stats.totalAdmins }}</h3>
+          <p>Administrators</p>
+        </div>
+      </div>
+
+      <!-- New Users Today -->
+      <div class="stat-card">
+        <div class="stat-icon new-today">
+          <i class="fas fa-user-plus"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ stats.newUsersToday }}</h3>
+          <p>New Today</p>
+        </div>
+      </div>
+
+      <!-- New Users This Week -->
+      <div class="stat-card">
+        <div class="stat-icon new-week">
+          <i class="fas fa-calendar-week"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ stats.newUsersThisWeek }}</h3>
+          <p>New This Week</p>
+        </div>
+      </div>
+
+      <!-- New Users This Month -->
+      <div class="stat-card">
+        <div class="stat-icon new-month">
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ stats.newUsersThisMonth }}</h3>
+          <p>New This Month</p>
+        </div>
+      </div>
+
+      <!-- Active Users -->
+      <div class="stat-card">
+        <div class="stat-icon active-users">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ stats.activeUsers }}</h3>
+          <p>Active Users</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h2>Quick Actions</h2>
+      <div class="actions-grid">
+        <a routerLink="/admin/users" class="action-card">
+          <i class="fas fa-users-cog"></i>
+          <h3>Manage All Users</h3>
+          <p>View, edit, and manage all user accounts</p>
+        </a>
+        <a routerLink="/admin/users/create" class="action-card">
+          <i class="fas fa-user-plus"></i>
+          <h3>Create Seller</h3>
+          <p>Add new seller accounts to the platform</p>
+        </a>
+        <a routerLink="/admin/customers" class="action-card">
+          <i class="fas fa-shopping-bag"></i>
+          <h3>Customer List</h3>
+          <p>View and manage customer accounts</p>
+        </a>
+        <a routerLink="/admin/sellers" class="action-card">
+          <i class="fas fa-store-alt"></i>
+          <h3>Seller List</h3>
+          <p>View and manage seller accounts</p>
+        </a>
+      </div>
+    </div>
+
+    <!-- Recent Users -->
+    <div class="recent-users">
+      <div class="section-header">
+        <h2>Recent Users</h2>
+        <a routerLink="/admin/users" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+      </div>
+      
+      <div class="users-list">
+        <div *ngFor="let user of recentUsers" class="user-item">
+          <div class="user-avatar">
+            {{ getInitials(user) }}
+          </div>
+          <div class="user-info">
+            <h4>{{ user.firstName }} {{ user.lastName }}</h4>
+            <p>{{ '@' + user.username }}</p>
+          </div>
+          <div class="user-meta">
+            <span class="role-badge" [ngClass]="getRoleBadgeClass(user.roles)">
+              {{ getRoleDisplay(user.roles) }}
+            </span>
+            <span class="join-date">
+              <i class="fas fa-calendar"></i>
+              {{ formatDate(user.createdAt) }}
+            </span>
+          </div>
+          <div class="user-actions">
+            <button class="btn-icon" [routerLink]="['/admin/users', user.id]" title="View Details">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button class="btn-icon" [routerLink]="['/admin/users/edit', user.id]" title="Edit User">
+              <i class="fas fa-edit"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -39,26 +39,26 @@ public class ProductService {
                 .imageUrls(productRequest.getImageUrls())
                 .stockQuantity(productRequest.getStockQuantity() != null ? productRequest.getStockQuantity() : 0)
                 .active(productRequest.getActive() != null ? productRequest.getActive() : true)
+                .sellerId(productRequest.getSellerId())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
-        
+
         product = productRepository.save(product);
-        
+
         // Send Kafka event to create inventory (Asynchronous)
         ProductCreatedEvent createdEvent = ProductCreatedEvent.builder()
                 .productId(product.getId())
                 .skuCode(product.getSkuCode())
                 .name(product.getName())
                 .quantity(product.getStockQuantity())
+                .sellerId(product.getSellerId())  // ✅ ADD THIS to event too
                 .build();
         kafkaTemplate.send("product-created-topic", createdEvent);
-        
+
         // Also send notification event
-        kafkaTemplate.send("notificationTopic", new ProductPlacedEvent(product.getId()));
-        
-        log.info("Product {} is created with skuCode {}", product.getId(), product.getSkuCode());
-        
+        kafkaTemplate.send("notificationTopic", new ProductPlacedEvent(product.getId()));        
+        log.info("Product {} is created with skuCode {} by seller {}", product.getId(), product.getSkuCode(), product.getSellerId());
         return mapToProductResponse(product);
     }
 
@@ -109,6 +109,9 @@ public class ProductService {
         product.setImageUrls(productRequest.getImageUrls());
         product.setStockQuantity(productRequest.getStockQuantity());
         product.setActive(productRequest.getActive());
+        if (productRequest.getSellerId() != null) {
+            product.setSellerId(productRequest.getSellerId());
+        }
         product.setUpdatedAt(LocalDateTime.now());
         
         product = productRepository.save(product);
@@ -143,6 +146,12 @@ public class ProductService {
         productRepository.delete(product);
         
         log.info("Product {} is deleted", id);
+    }
+    public List<ProductResponse> getProductsBySeller(String sellerId) {
+        List<Product> products = productRepository.findBySellerId(sellerId);
+        return products.stream()
+                .map(this::mapToProductResponse)
+                .collect(Collectors.toList());
     }
 
     // ADVANCED - Get active products only
@@ -207,9 +216,11 @@ public class ProductService {
                 .imageUrls(product.getImageUrls())
                 .stockQuantity(product.getStockQuantity())
                 .active(product.getActive())
+                .sellerId(product.getSellerId())
                 .inStock(false)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
+                .sellerId(product.getSellerId())
                 .build();
     }
 }

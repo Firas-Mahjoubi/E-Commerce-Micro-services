@@ -1,0 +1,179 @@
+<div class="profile-container">
+  <div class="profile-header">
+    <div class="avatar-large">{{ userInitials }}</div>
+    <h1>My Profile</h1>
+    <p class="subtitle">Manage your personal information</p>
+  </div>
+
+  <!-- Success Message -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+    </svg>
+    {{ successMessage }}
+  </div>
+
+  <!-- Error Message -->
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+    </svg>
+    {{ errorMessage }}
+  </div>
+
+  <div class="profile-card">
+    <div class="card-header">
+      <h2>Personal Information</h2>
+      <button 
+        class="btn-edit" 
+        (click)="toggleEdit()"
+        [disabled]="isLoading"
+      >
+        <svg *ngIf="!isEditing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+        </svg>
+        <svg *ngIf="isEditing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        </svg>
+        {{ isEditing ? 'Cancel' : 'Edit Profile' }}
+      </button>
+    </div>
+
+    <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="profile-form">
+      <!-- Username (Read-only) -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="username">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+            Username
+          </label>
+          <input 
+            type="text" 
+            id="username" 
+            formControlName="username"
+            readonly
+          />
+          <span class="field-note">Username cannot be changed</span>
+        </div>
+
+        <!-- Email (Read-only) -->
+        <div class="form-group">
+          <label for="email">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+            Email
+          </label>
+          <input 
+            type="email" 
+            id="email" 
+            formControlName="email"
+            readonly
+          />
+          <span class="field-note">Email cannot be changed</span>
+        </div>
+      </div>
+
+      <!-- First Name -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="firstName">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+            </svg>
+            First Name
+          </label>
+          <input 
+            type="text" 
+            id="firstName" 
+            formControlName="firstName"
+            [readonly]="!isEditing"
+            [class.editable]="isEditing"
+            placeholder="Enter your first name"
+          />
+          <div class="error-text" *ngIf="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched">
+            <span *ngIf="profileForm.get('firstName')?.errors?.['required']">First name is required</span>
+          </div>
+        </div>
+
+        <!-- Last Name -->
+        <div class="form-group">
+          <label for="lastName">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+            </svg>
+            Last Name
+          </label>
+          <input 
+            type="text" 
+            id="lastName" 
+            formControlName="lastName"
+            [readonly]="!isEditing"
+            [class.editable]="isEditing"
+            placeholder="Enter your last name"
+          />
+          <div class="error-text" *ngIf="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched">
+            <span *ngIf="profileForm.get('lastName')?.errors?.['required']">Last name is required</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone -->
+      <div class="form-group">
+        <label for="phone">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+          </svg>
+          Phone Number
+        </label>
+        <input 
+          type="tel" 
+          id="phone" 
+          formControlName="phone"
+          [readonly]="!isEditing"
+          [class.editable]="isEditing"
+          placeholder="+1234567890"
+        />
+        <div class="error-text" *ngIf="profileForm.get('phone')?.invalid && profileForm.get('phone')?.touched">
+          <span *ngIf="profileForm.get('phone')?.errors?.['pattern']">Please enter a valid phone number</span>
+        </div>
+      </div>
+
+      <!-- Save Button -->
+      <button 
+        type="submit" 
+        class="btn-save" 
+        *ngIf="isEditing"
+        [disabled]="profileForm.invalid || isLoading"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+        </svg>
+        {{ isLoading ? 'Saving...' : 'Save Changes' }}
+      </button>
+    </form>
+  </div>
+
+  <!-- Account Info Card -->
+  <div class="info-card">
+    <h3>Account Information</h3>
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">Account Status</span>
+        <span class="info-value">
+          <span class="status-badge active">Active</span>
+        </span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Member Since</span>
+        <span class="info-value">{{ currentUser?.createdAt | date: 'MMM yyyy' }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">User ID</span>
+        <span class="info-value user-id">{{ currentUser?.id }}</span>
+      </div>
+    </div>
+  </div>
+</div>
