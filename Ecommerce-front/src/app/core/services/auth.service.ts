@@ -52,9 +52,18 @@ export class AuthService {
    * Login user
    */
   login(credentials: LoginRequest): Observable<AuthResponse> {
+    console.log('[AuthService] Login request for:', credentials.username);
     return this.http.post<AuthResponse>(`${this.API_URL}/auth/login`, credentials)
       .pipe(
-        tap(response => this.handleAuthResponse(response)),
+        tap(response => {
+          console.log('[AuthService] Login response received:', {
+            hasToken: !!response.access_token,
+            tokenLength: response.access_token?.length,
+            username: response.user?.username
+          });
+          this.handleAuthResponse(response);
+          console.log('[AuthService] Token saved. isAuthenticated:', this.isAuthenticated());
+        }),
         catchError(this.handleError)
       );
   }
@@ -144,12 +153,53 @@ export class AuthService {
    * Handle authentication response
    */
   private handleAuthResponse(response: AuthResponse): void {
+    console.log('[AuthService] Handling auth response...');
     if (this.isBrowser) {
       localStorage.setItem(this.TOKEN_KEY, response.access_token);
       localStorage.setItem(this.REFRESH_TOKEN_KEY, response.refresh_token);
       localStorage.setItem(this.USER_KEY, JSON.stringify(response.user));
+      console.log('[AuthService] Tokens saved to localStorage');
+      console.log('[AuthService] Verification - Token exists:', !!localStorage.getItem(this.TOKEN_KEY));
+    } else {
+      console.warn('[AuthService] Not browser - tokens not saved');
     }
     this.currentUserSubject.next(response.user);
+  }
+
+  /**
+   * Get user role
+   */
+  getUserRole(): string | null {
+    const user = this.currentUserSubject.value;
+    if (user && user.roles && user.roles.length > 0) {
+      return user.roles[0]; // Return first role
+    }
+    return null;
+  }
+
+  /**
+   * Check if user has role
+   */
+  hasRole(role: string): boolean {
+    const user = this.currentUserSubject.value;
+    return user?.roles?.includes(role) || false;
+  }
+
+  /**
+   * Redirect based on user role
+   */
+  redirectByRole(): void {
+    const role = this.getUserRole();
+    console.log('[AuthService] Redirecting by role:', role);
+    
+    if (role === 'seller' || this.hasRole('seller')) {
+      this.router.navigate(['/seller/dashboard']);
+    } else if (role === 'admin' || this.hasRole('admin')) {
+      this.router.navigate(['/admin/dashboard']);
+    } else {
+      // Default to customer products page
+      this.router.navigate(['/products']);
+    }
   }
 
   /**

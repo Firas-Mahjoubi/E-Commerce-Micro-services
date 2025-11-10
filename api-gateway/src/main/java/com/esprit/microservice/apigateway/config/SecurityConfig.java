@@ -24,6 +24,10 @@ public class SecurityConfig {
                                 .permitAll()
                                 .pathMatchers("/api/health/**")  // Allow health check endpoints
                                 .permitAll()
+                                .pathMatchers("/api/product/**")  // Allow public access to products
+                                .permitAll()
+                                .pathMatchers("/api/inventory/**")  // Allow public access to inventory
+                                .permitAll()
                                 .anyExchange()
                                 .authenticated())
                 .oauth2ResourceServer(spec -> spec.jwt(Customizer.withDefaults()));

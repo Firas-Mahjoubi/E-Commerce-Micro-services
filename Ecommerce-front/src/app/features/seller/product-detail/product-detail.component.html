@@ -1,0 +1,106 @@
+<div class="product-detail-container">
+  <div class="back-button">
+    <button (click)="goBack()" class="btn-back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Back to Products
+    </button>
+  </div>
+
+  <div *ngIf="isLoading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading product details...</p>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-message">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <p>{{ errorMessage }}</p>
+    <button (click)="goBack()" class="btn-secondary">Return to Products</button>
+  </div>
+
+  <div *ngIf="product && !isLoading" class="product-detail">
+    <div class="product-images">
+      <div class="main-image">
+        <img [src]="selectedImage" [alt]="product.name">
+      </div>
+      <div class="thumbnail-images" *ngIf="product.imageUrls && product.imageUrls.length > 1">
+        <img 
+          *ngFor="let imageUrl of product.imageUrls" 
+          [src]="getImageUrl(imageUrl)" 
+          [alt]="product.name"
+          [class.active]="selectedImage === getImageUrl(imageUrl)"
+          (click)="selectImage(imageUrl)">
+      </div>
+    </div>
+
+    <div class="product-info">
+      <div class="product-header">
+        <h1>{{ product.name }}</h1>
+        <span class="product-category">{{ product.category || 'Uncategorized' }}</span>
+      </div>
+
+      <div class="product-price">
+        <span class="price">${{ product.price.toFixed(2) }}</span>
+        <span class="stock-status" [class.in-stock]="(product.stockQuantity || 0) > 0" [class.out-of-stock]="(product.stockQuantity || 0) === 0">
+          {{ (product.stockQuantity || 0) > 0 ? 'In Stock (' + product.stockQuantity + ' available)' : 'Out of Stock' }}
+        </span>
+      </div>
+
+      <div class="product-description">
+        <h3>Description</h3>
+        <p>{{ product.description }}</p>
+      </div>
+
+      <div class="product-details">
+        <div class="detail-item">
+          <span class="label">SKU:</span>
+          <span class="value">{{ product.skuCode }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Category:</span>
+          <span class="value">{{ product.category || 'Uncategorized' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Status:</span>
+          <span class="value" [class.active-status]="product.active" [class.inactive-status]="!product.active">
+            {{ product.active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Stock Quantity:</span>
+          <span class="value">{{ product.stockQuantity || 0 }} units</span>
+        </div>
+        <div class="detail-item" *ngIf="product.createdAt">
+          <span class="label">Created:</span>
+          <span class="value">{{ product.createdAt | date: 'short' }}</span>
+        </div>
+        <div class="detail-item" *ngIf="product.updatedAt">
+          <span class="label">Last Updated:</span>
+          <span class="value">{{ product.updatedAt | date: 'short' }}</span>
+        </div>
+      </div>
+
+      <div class="product-actions">
+        <button (click)="editProduct()" class="btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Edit Product
+        </button>
+        <button (click)="deleteProduct()" class="btn-danger">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Delete Product
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

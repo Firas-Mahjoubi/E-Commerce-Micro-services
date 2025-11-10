@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const keycloakConfig = require('./config/keycloak.config');
 const keycloakMiddleware = require('./middleware/keycloak.middleware');
+const jwtMiddleware = require('./middleware/jwt.middleware');
 const errorHandler = require('./middleware/error.middleware');
 const logger = require('./utils/logger');
 const { initEureka, setupGracefulShutdown } = require('./config/eureka.config');
@@ -27,10 +28,11 @@ app.set('trust proxy', 1);
 
 // Middleware
 app.use(helmet()); // Security headers
-app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || '*',
-  credentials: true
-}));
+// CORS is handled by API Gateway, disable here to prevent duplicate headers
+// app.use(cors({
+//   origin: process.env.CORS_ORIGIN?.split(',') || '*',
+//   credentials: true
+// }));
 app.use(morgan('combined', { stream: logger.stream }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -56,15 +58,16 @@ app.use('/api/health', healthRoutes);
 // Public routes (no auth required)
 app.use('/api/auth', authRoutes);
 
-// Protected routes (require authentication)
-app.use('/api/users', keycloak.protect(), userRoutes);
-app.use('/api/profile', keycloak.protect(), profileRoutes);
+// Protected routes (require JWT authentication)
+app.use('/api/users', jwtMiddleware.verifyToken, userRoutes);
+app.use('/api/profile', jwtMiddleware.verifyToken, profileRoutes);
 
 // Admin routes (require admin role)
 app.get('/api/admin/users', 
-  keycloak.protect('admin'),
+  jwtMiddleware.verifyToken,
+  jwtMiddleware.requireRole('admin'),
   (req, res) => {
-    res.json({ message: 'Admin access granted', user: req.kauth.grant.access_token.content });
+    res.json({ message: 'Admin access granted', user: req.user });
   }
 );
 
