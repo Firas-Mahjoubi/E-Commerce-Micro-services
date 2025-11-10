@@ -2,6 +2,7 @@ const axios = require('axios');
 const db = require('../models');
 const logger = require('../utils/logger');
 
+// Keycloak admin client
 const keycloakAdminClient = axios.create({
   baseURL: `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}`,
   headers: {
@@ -169,8 +170,47 @@ exports.getAllUsers = async (req, res, next) => {
       order: [['created_at', 'DESC']]
     });
 
+    // Get admin token to fetch roles from Keycloak
+    const adminToken = await getAdminToken();
+    keycloakAdminClient.defaults.headers.common['Authorization'] = `Bearer ${adminToken}`;
+
+    // Transform users and fetch their roles from Keycloak
+    const transformedUsersPromises = users.map(async (user) => {
+      let roles = [];
+      
+      try {
+        // Fetch user's roles from Keycloak
+        const rolesResponse = await keycloakAdminClient.get(`/users/${user.keycloak_id}/role-mappings/realm`);
+        roles = rolesResponse.data.map(role => role.name);
+        logger.info(`Fetched roles for ${user.username}: ${JSON.stringify(roles)}`);
+      } catch (error) {
+        logger.error(`Failed to fetch roles for user ${user.username}:`, error.response?.data || error.message);
+        // Default to empty roles if fetch fails
+        roles = [];
+      }
+
+      return {
+        id: user.id,
+        keycloak_id: user.keycloak_id,
+        username: user.username,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        phone: user.phone,
+        address: user.profile?.address,
+        roles: roles,
+        emailVerified: user.email_verified,
+        enabled: user.is_active,
+        createdAt: user.created_at,
+        updatedAt: user.updated_at,
+        lastLogin: user.last_login
+      };
+    });
+
+    const transformedUsers = await Promise.all(transformedUsersPromises);
+
     res.json({
-      users,
+      users: transformedUsers,
       pagination: {
         total: count,
         page: parseInt(page),
@@ -202,7 +242,38 @@ exports.getUserById = async (req, res, next) => {
       });
     }
 
-    res.json({ user });
+    // Get admin token to fetch roles from Keycloak
+    const adminToken = await getAdminToken();
+    keycloakAdminClient.defaults.headers.common['Authorization'] = `Bearer ${adminToken}`;
+
+    // Fetch user's roles from Keycloak
+    let roles = [];
+    try {
+      const rolesResponse = await keycloakAdminClient.get(`/users/${user.keycloak_id}/role-mappings/realm`);
+      roles = rolesResponse.data.map(role => role.name);
+      logger.info(`Fetched roles for ${user.username}: ${JSON.stringify(roles)}`);
+    } catch (error) {
+      logger.error(`Failed to fetch roles for user ${user.username}:`, error.response?.data || error.message);
+      roles = [];
+    }
+
+    // Return user data in the format frontend expects
+    res.json({
+      id: user.id,
+      keycloak_id: user.keycloak_id,
+      username: user.username,
+      email: user.email,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      phone: user.phone,
+      address: user.profile?.address,
+      roles: roles,
+      emailVerified: user.email_verified,
+      enabled: user.is_active,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at,
+      lastLogin: user.last_login
+    });
   } catch (error) {
     next(error);
   }
@@ -212,9 +283,11 @@ exports.getUserById = async (req, res, next) => {
 exports.updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const { username, email, firstName, lastName, phone, role, enabled } = req.body;
 
-    const user = await db.User.findByPk(id);
+    const user = await db.User.findByPk(id, {
+      include: [{ model: db.UserProfile, as: 'profile' }]
+    });
 
     if (!user) {
       return res.status(404).json({
@@ -223,11 +296,95 @@ exports.updateUser = async (req, res, next) => {
       });
     }
 
-    await user.update(updates);
+    // Get admin token for Keycloak operations
+    const adminToken = await getAdminToken();
+    keycloakAdminClient.defaults.headers.common['Authorization'] = `Bearer ${adminToken}`;
+
+    // Update user in Keycloak
+    try {
+      await keycloakAdminClient.put(`/users/${user.keycloak_id}`, {
+        username: username || user.username,
+        email: email || user.email,
+        firstName: firstName || user.first_name,
+        lastName: lastName || user.last_name,
+        enabled: enabled !== undefined ? enabled : user.is_active
+      });
+      logger.info(`Updated user in Keycloak: ${username || user.username}`);
+    } catch (keycloakError) {
+      logger.error('Failed to update user in Keycloak:', keycloakError.response?.data || keycloakError.message);
+      return res.status(500).json({
+        error: 'Keycloak Update Failed',
+        message: 'Failed to update user in Keycloak'
+      });
+    }
+
+    // Handle role change if provided
+    if (role && ['customer', 'seller', 'admin'].includes(role)) {
+      try {
+        // Get current roles
+        const currentRolesResponse = await keycloakAdminClient.get(`/users/${user.keycloak_id}/role-mappings/realm`);
+        const currentRoles = currentRolesResponse.data;
+
+        // Remove old roles (only customer, seller, admin)
+        const rolesToRemove = currentRoles.filter(r => ['customer', 'seller', 'admin'].includes(r.name));
+        if (rolesToRemove.length > 0) {
+          await keycloakAdminClient.delete(`/users/${user.keycloak_id}/role-mappings/realm`, {
+            data: rolesToRemove
+          });
+          logger.info(`Removed roles from user: ${rolesToRemove.map(r => r.name).join(', ')}`);
+        }
+
+        // Assign new role
+        const newRoleResponse = await keycloakAdminClient.get(`/roles/${role}`);
+        await keycloakAdminClient.post(`/users/${user.keycloak_id}/role-mappings/realm`, [newRoleResponse.data]);
+        logger.info(`Assigned ${role} role to user ${username || user.username}`);
+      } catch (roleError) {
+        logger.error('Failed to update user role:', roleError.response?.data || roleError.message);
+        return res.status(500).json({
+          error: 'Role Update Failed',
+          message: 'Failed to update user role in Keycloak'
+        });
+      }
+    }
+
+    // Update user in database
+    await user.update({
+      username: username || user.username,
+      email: email || user.email,
+      first_name: firstName || user.first_name,
+      last_name: lastName || user.last_name,
+      phone: phone || user.phone,
+      is_active: enabled !== undefined ? enabled : user.is_active
+    });
+
+    // Update profile if it exists
+    if (user.profile) {
+      await user.profile.update({
+        first_name: firstName || user.profile.first_name,
+        last_name: lastName || user.profile.last_name,
+        phone: phone || user.profile.phone
+      });
+    }
+
+    // Fetch updated roles
+    const rolesResponse = await keycloakAdminClient.get(`/users/${user.keycloak_id}/role-mappings/realm`);
+    const roles = rolesResponse.data.map(role => role.name);
 
     res.json({
       message: 'User updated successfully',
-      user: user.toJSON()
+      user: {
+        id: user.id,
+        keycloak_id: user.keycloak_id,
+        username: user.username,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        phone: user.phone,
+        roles: roles,
+        enabled: user.is_active,
+        createdAt: user.created_at,
+        updatedAt: user.updated_at
+      }
     });
   } catch (error) {
     next(error);

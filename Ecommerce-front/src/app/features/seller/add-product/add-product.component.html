@@ -1,0 +1,256 @@
+<div class="add-product-container">
+  <div class="add-product-header">
+    <h1>Add New Product</h1>
+    <p class="subtitle">Create a new product for your store</p>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+    </svg>
+    {{ successMessage }}
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+    </svg>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Add Product Form -->
+  <div class="form-card">
+    <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
+      <!-- Product Name -->
+      <div class="form-group">
+        <label for="name">
+          Product Name *
+        </label>
+        <input
+          type="text"
+          id="name"
+          formControlName="name"
+          placeholder="Enter product name"
+          [class.error]="name?.invalid && name?.touched"
+        />
+        <span *ngIf="name?.invalid && name?.touched" class="error-text">
+          <span *ngIf="name?.errors?.['required']">Product name is required</span>
+          <span *ngIf="name?.errors?.['minlength']">Product name must be at least 3 characters</span>
+        </span>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <label for="description">
+          Description *
+        </label>
+        <textarea
+          id="description"
+          formControlName="description"
+          rows="4"
+          placeholder="Enter product description"
+          [class.error]="description?.invalid && description?.touched"
+        ></textarea>
+        <span *ngIf="description?.invalid && description?.touched" class="error-text">
+          <span *ngIf="description?.errors?.['required']">Description is required</span>
+          <span *ngIf="description?.errors?.['minlength']">Description must be at least 10 characters</span>
+        </span>
+      </div>
+
+      <!-- Price and Category Row -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="price">
+            Price ($) *
+          </label>
+          <input
+            type="number"
+            id="price"
+            formControlName="price"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            [class.error]="price?.invalid && price?.touched"
+          />
+          <span *ngIf="price?.invalid && price?.touched" class="error-text">
+            <span *ngIf="price?.errors?.['required']">Price is required</span>
+            <span *ngIf="price?.errors?.['min']">Price must be greater than 0</span>
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="category">
+            Category *
+          </label>
+          <select
+            id="category"
+            formControlName="category"
+            [class.error]="category?.invalid && category?.touched"
+          >
+            <option value="">Select category</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Fashion">Fashion</option>
+            <option value="Home">Home</option>
+            <option value="Books">Books</option>
+            <option value="Sports">Sports</option>
+            <option value="Beauty">Beauty</option>
+            <option value="Toys">Toys</option>
+            <option value="Food">Food</option>
+            <option value="Other">Other</option>
+          </select>
+          <span *ngIf="category?.invalid && category?.touched" class="error-text">
+            Category is required
+          </span>
+        </div>
+      </div>
+
+      <!-- SKU Code with Auto-Generate -->
+      <div class="form-group">
+        <label for="skuCode">
+          SKU Code *
+        </label>
+        <div class="sku-input-group">
+          <input
+            type="text"
+            id="skuCode"
+            formControlName="skuCode"
+            placeholder="Enter SKU code or generate automatically"
+            [class.error]="skuCode?.invalid && skuCode?.touched"
+          />
+          <button
+            type="button"
+            class="btn-generate-sku"
+            (click)="generateSKU()"
+            [disabled]="!name?.value || !category?.value"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            </svg>
+            Generate
+          </button>
+        </div>
+        <span *ngIf="skuCode?.invalid && skuCode?.touched" class="error-text">
+          SKU code is required
+        </span>
+        <span class="field-note">Auto-generate SKU after entering name and category</span>
+      </div>
+
+      <!-- Stock Quantity -->
+      <div class="form-group">
+        <label for="stockQuantity">
+          Stock Quantity *
+        </label>
+        <input
+          type="number"
+          id="stockQuantity"
+          formControlName="stockQuantity"
+          min="0"
+          placeholder="0"
+          [class.error]="stockQuantity?.invalid && stockQuantity?.touched"
+        />
+        <span *ngIf="stockQuantity?.invalid && stockQuantity?.touched" class="error-text">
+          <span *ngIf="stockQuantity?.errors?.['required']">Stock quantity is required</span>
+          <span *ngIf="stockQuantity?.errors?.['min']">Stock quantity cannot be negative</span>
+        </span>
+      </div>
+
+      <!-- Image Upload -->
+      <div class="form-group">
+        <label for="productImages">
+          Product Images *
+        </label>
+        <div class="file-upload-area">
+          <input
+            type="file"
+            id="productImages"
+            (change)="onFileSelected($event)"
+            accept="image/*"
+            multiple
+            #fileInput
+            style="display: none"
+          />
+          <button
+            type="button"
+            class="btn-upload"
+            (click)="fileInput.click()"
+            [disabled]="isSaving || isUploading"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Select Images
+          </button>
+          <span class="file-note">You can select multiple images (Max 10MB each)</span>
+        </div>
+
+        <!-- Image Previews -->
+        <div *ngIf="imagePreviews.length > 0" class="image-previews">
+          <div *ngFor="let preview of imagePreviews; let i = index" class="preview-item">
+            <img [src]="preview" [alt]="'Preview ' + (i + 1)" />
+            <button
+              type="button"
+              class="btn-remove-image"
+              (click)="removeImage(i)"
+              [disabled]="isSaving || isUploading"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <span *ngIf="selectedFiles.length === 0" class="error-text">
+          At least one product image is required
+        </span>
+      </div>
+
+      <!-- Active Status -->
+      <div class="form-group checkbox-group">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            formControlName="active"
+          />
+          <span>Active (Product will be visible to customers)</span>
+        </label>
+      </div>
+
+      <!-- Seller ID Info -->
+      <div class="seller-info">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+        <span>Seller ID: <strong>{{ sellerId || 'Loading...' }}</strong></span>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button
+          type="button"
+          (click)="cancel()"
+          class="btn-cancel"
+          [disabled]="isSaving"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn-save"
+          [disabled]="productForm.invalid || isSaving || isUploading || !sellerId || selectedFiles.length === 0"
+        >
+          <svg *ngIf="isSaving || isUploading" class="spinner-small" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <svg *ngIf="!isSaving && !isUploading" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+          {{ isSaving ? 'Creating...' : isUploading ? 'Uploading Images...' : 'Create Product' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
