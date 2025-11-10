@@ -13,7 +13,7 @@ public class Order {
         this.status = "PENDING";
     }
 
-    public Order(Long customerId, LocalDateTime orderDate, Double totalAmount, String status, List<OrderItem> items) {
+    public Order(String customerId, LocalDateTime orderDate, Double totalAmount, String status, List<OrderItem> items) {
         this.customerId = customerId;
         this.orderDate = orderDate != null ? orderDate : LocalDateTime.now();
         this.totalAmount = totalAmount;
@@ -25,7 +25,7 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long customerId; // l'ID du client qui passe la commande
+    private String customerId; // l'ID du client qui passe la commande (ObjectId MongoDB)
 
     private LocalDateTime orderDate = LocalDateTime.now();
 
@@ -46,11 +46,11 @@ public class Order {
         this.id = id;
     }
 
-    public Long getCustomerId() {
+    public String getCustomerId() {
         return customerId;
     }
 
-    public void setCustomerId(Long customerId) {
+    public void setCustomerId(String customerId) {
         this.customerId = customerId;
     }
 

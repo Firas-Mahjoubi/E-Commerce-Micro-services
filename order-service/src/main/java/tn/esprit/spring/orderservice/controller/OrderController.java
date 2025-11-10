@@ -1,5 +1,7 @@
 package tn.esprit.spring.orderservice.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -9,7 +11,9 @@ import tn.esprit.spring.orderservice.dto.CreateOrderRequest;
 import tn.esprit.spring.orderservice.dto.OrderResponse;
 import tn.esprit.spring.orderservice.service.OrderService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.Base64;
 import java.util.List;
 
 @RestController
@@ -30,14 +34,22 @@ public class OrderController {
      * Créer une nouvelle commande
      */
     @PostMapping
-    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request, HttpServletRequest httpRequest) {
         try {
-            log.info("Received request to create order for customer: {}", request.getCustomerId());
+            // ✅ Extract customer ID from JWT token
+            String customerId = extractCustomerIdFromToken(httpRequest);
+            request.setCustomerId(customerId);
+
+            log.info("Received request to create order for customer: {}", customerId);
             OrderResponse orderResponse = orderService.createOrder(request);
-            return new ResponseEntity<>(orderResponse, HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED).body(orderResponse);
+        } catch (RuntimeException e) {
+            log.error("Error creating order: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().build();
         } catch (Exception e) {
             log.error("Error creating order: {}", e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -45,7 +57,7 @@ public class OrderController {
      * Récupérer toutes les commandes d'un client
      */
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<OrderResponse>> getOrdersByCustomer(@PathVariable Long customerId) {
+    public ResponseEntity<List<OrderResponse>> getOrdersByCustomer(@PathVariable String customerId) {
         try {
             log.info("Fetching orders for customer: {}", customerId);
             List<OrderResponse> orders = orderService.getOrdersByCustomerId(customerId);
@@ -80,7 +92,7 @@ public class OrderController {
     @GetMapping("/{orderId}/customer/{customerId}")
     public ResponseEntity<OrderResponse> getOrderByIdAndCustomer(
             @PathVariable Long orderId,
-            @PathVariable Long customerId) {
+            @PathVariable String customerId) {
         try {
             log.info("Fetching order {} for customer: {}", orderId, customerId);
             OrderResponse order = orderService.getOrderByIdAndCustomerId(orderId, customerId);
@@ -120,7 +132,7 @@ public class OrderController {
     @PutMapping("/{orderId}/cancel/customer/{customerId}")
     public ResponseEntity<OrderResponse> cancelOrder(
             @PathVariable Long orderId,
-            @PathVariable Long customerId) {
+            @PathVariable String customerId) {
         try {
             log.info("Cancelling order {} for customer: {}", orderId, customerId);
             OrderResponse order = orderService.cancelOrder(orderId, customerId);
@@ -140,5 +152,35 @@ public class OrderController {
     @GetMapping("/health")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Order Service is running!");
+    }
+
+    // ✅ JWT extraction methods
+    private String extractCustomerIdFromToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization header missing or invalid");
+        }
+        String token = authHeader.substring(7);
+        return extractSubFromJWT(token);
+    }
+
+    private String extractSubFromJWT(String token) {
+        try {
+            String[] chunks = token.split("\\.");
+            if (chunks.length != 3) {
+                throw new RuntimeException("Invalid JWT token format");
+            }
+            Base64.Decoder decoder = Base64.getUrlDecoder();
+            String payload = new String(decoder.decode(chunks[1]));
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode jsonNode = mapper.readTree(payload);
+            String sub = jsonNode.get("sub").asText();
+            if (sub == null || sub.isEmpty()) {
+                throw new RuntimeException("Customer ID (sub) not found in token");
+            }
+            return sub;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to extract customer ID from token: " + e.getMessage());
+        }
     }
 }
