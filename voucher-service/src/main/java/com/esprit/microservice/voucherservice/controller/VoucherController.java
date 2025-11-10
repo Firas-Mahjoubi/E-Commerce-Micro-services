@@ -1,5 +1,6 @@
 package com.esprit.microservice.voucherservice.controller;
 
+import com.esprit.microservice.voucherservice.dto.VoucherStatsDto;
 import com.esprit.microservice.voucherservice.entity.Voucher;
 import com.esprit.microservice.voucherservice.service.VoucherService;
 import lombok.RequiredArgsConstructor;
@@ -77,5 +78,11 @@ public class VoucherController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping("/statistics")
+    public ResponseEntity<VoucherStatsDto> getVoucherStatistics() {
+        VoucherStatsDto stats = voucherService.getVoucherStatistics();
+        return ResponseEntity.ok(stats);
     }
 }

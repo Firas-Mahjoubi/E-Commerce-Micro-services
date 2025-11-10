@@ -2,6 +2,7 @@ package com.esprit.microservice.voucherservice.service;
 
 import com.esprit.microservice.voucherservice.client.UserClient;
 import com.esprit.microservice.voucherservice.dto.CustomersResponse;
+import com.esprit.microservice.voucherservice.dto.VoucherStatsDto;
 import com.esprit.microservice.voucherservice.entity.Voucher;
 import com.esprit.microservice.voucherservice.repository.VoucherRepo;
 import lombok.RequiredArgsConstructor;
@@ -105,5 +106,38 @@ public class VoucherService {
     public List<Voucher> getVouchersByCategory(String category) {
         log.info("Fetching vouchers by category: {}", category);
         return voucherRepo.findByApplicableCategory(category);
+    }
+
+    public VoucherStatsDto getVoucherStatistics() {
+        log.info("Calculating voucher statistics");
+        List<Voucher> allVouchers = voucherRepo.findAll();
+        LocalDateTime now = LocalDateTime.now();
+
+        long totalVouchers = allVouchers.size();
+        long activeVouchers = allVouchers.stream()
+                .filter(v -> v.getActive() &&
+                        v.getEndDate().isAfter(now) &&
+                        v.getStartDate().isBefore(now))
+                .count();
+
+        long inactiveVouchers = allVouchers.stream()
+                .filter(v -> !v.getActive())
+                .count();
+
+        long expiredVouchers = allVouchers.stream()
+                .filter(v -> v.getEndDate().isBefore(now))
+                .count();
+
+        long scheduledVouchers = allVouchers.stream()
+                .filter(v -> v.getStartDate().isAfter(now))
+                .count();
+
+        return VoucherStatsDto.builder()
+                .totalVouchers(totalVouchers)
+                .activeVouchers(activeVouchers)
+                .inactiveVouchers(inactiveVouchers)
+                .expiredVouchers(expiredVouchers)
+                .scheduledVouchers(scheduledVouchers)
+                .build();
     }
 }
