@@ -48,6 +48,22 @@ export const routes: Routes = [
     loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [authGuard]
   },
+  // Review Routes (Customer)
+  {
+    path: 'reviews/product/:id',
+    loadComponent: () => import('./features/reviews/product-reviews/product-reviews.component').then(m => m.ProductReviewsComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'reviews/create/:productId',
+    loadComponent: () => import('./features/reviews/create-review/create-review.component').then(m => m.CreateReviewComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'reviews/my-reviews',
+    loadComponent: () => import('./features/reviews/my-reviews/my-reviews.component').then(m => m.MyReviewsComponent),
+    canActivate: [authGuard]
+  },
   // Seller Routes
   {
     path: 'seller',
@@ -85,6 +101,10 @@ export const routes: Routes = [
       {
         path: 'orders',
         loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) // Placeholder
+      },
+      {
+        path: 'reviews',
+        loadComponent: () => import('./features/reviews/seller-reviews/seller-reviews.component').then(m => m.SellerReviewsComponent)
       }
     ]
   },

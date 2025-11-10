@@ -21,6 +21,7 @@ public class Review {
     private String productId;
     private String userId;
     private String userName;
+    private String userEmail;  // Email de l'utilisateur
     private Integer rating; // 1-5 stars
     private String title;
     private String comment;

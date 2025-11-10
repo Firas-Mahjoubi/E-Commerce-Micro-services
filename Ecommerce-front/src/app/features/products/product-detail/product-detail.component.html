@@ -99,6 +99,26 @@
       <div class="out-of-stock-message" *ngIf="product.stockQuantity === 0">
         <p>This product is currently out of stock. Please check back later.</p>
       </div>
+
+      <!-- Reviews Section -->
+      <div class="reviews-preview">
+        <h3>Customer Reviews</h3>
+        <div class="reviews-actions">
+          <button (click)="viewReviews()" class="btn-view-reviews">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            View All Reviews
+          </button>
+          <button (click)="writeReview()" class="btn-write-review">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Write a Review
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 

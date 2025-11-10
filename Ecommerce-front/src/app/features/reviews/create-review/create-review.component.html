@@ -1,0 +1,123 @@
+<div class="create-review-container">
+  <div class="review-form-card">
+    <!-- Enhanced Header -->
+    <div class="page-header" [class.edit-mode]="isEditMode">
+      <div class="header-icon">
+        <i class="fas" [class.fa-edit]="isEditMode" [class.fa-pen-to-square]="!isEditMode"></i>
+      </div>
+      <div class="header-content">
+        <h1>{{ isEditMode ? 'Modifier votre avis' : 'Rédiger un avis' }}</h1>
+        <p class="header-subtitle" *ngIf="isEditMode">
+          Mettez à jour votre évaluation et partagez votre expérience
+        </p>
+        <p class="header-subtitle" *ngIf="!isEditMode">
+          Partagez votre expérience avec ce produit
+        </p>
+      </div>
+    </div>
+
+    <!-- Info: Modification d'un avis existant -->
+    <div *ngIf="isEditMode" class="info-message">
+      <i class="fas fa-info-circle"></i>
+      Vous modifiez votre avis existant. Vous ne pouvez avoir qu'un seul avis par produit.
+    </div>
+
+    <!-- Product Info -->
+    <div class="product-preview" *ngIf="product">
+      <img
+        *ngIf="product.imageUrls && product.imageUrls.length > 0"
+        [src]="product.imageUrls[0]"
+        [alt]="product.name"
+        class="product-image">
+      <div class="product-details">
+        <h3>{{ product.name }}</h3>
+        <p class="product-price">{{ product.price | currency:'EUR' }}</p>
+      </div>
+    </div>
+
+    <!-- Success Message -->
+    <div *ngIf="success" class="success-message">
+      <i class="fas fa-check-circle"></i>
+      <p>Votre avis a été publié avec succès ! Redirection en cours...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error" class="error-message">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ error }}
+    </div>
+
+    <!-- Review Form -->
+    <form [formGroup]="reviewForm" (ngSubmit)="onSubmit()" *ngIf="!success">
+      <!-- Rating -->
+      <div class="form-group">
+        <label class="required">Votre note</label>
+        <div class="rating-input">
+          <div class="stars-input">
+            <span
+              *ngFor="let star of [1,2,3,4,5]; let i = index"
+              class="star"
+              [class.filled]="i < displayRating"
+              (click)="setRating(i + 1)"
+              (mouseenter)="setHoveredRating(i + 1)"
+              (mouseleave)="setHoveredRating(0)">
+              {{ i < displayRating ? '★' : '☆' }}
+            </span>
+          </div>
+          <span class="rating-text" *ngIf="currentRating > 0">
+            {{ currentRating }} / 5 étoiles
+          </span>
+        </div>
+        <div class="error-text" *ngIf="reviewForm.get('rating')?.invalid && reviewForm.get('rating')?.touched">
+          Veuillez sélectionner une note
+        </div>
+      </div>
+
+      <!-- Title -->
+      <div class="form-group">
+        <label for="title" class="required">Titre de votre avis</label>
+        <input
+          type="text"
+          id="title"
+          formControlName="title"
+          class="form-control"
+          placeholder="Résumez votre expérience"
+          maxlength="100"
+          [class.invalid]="reviewForm.get('title')?.invalid && reviewForm.get('title')?.touched">
+        <div class="error-text" *ngIf="reviewForm.get('title')?.invalid && reviewForm.get('title')?.touched">
+          <span *ngIf="reviewForm.get('title')?.errors?.['required']">Le titre est requis</span>
+        </div>
+      </div>
+
+      <!-- Comment -->
+      <div class="form-group">
+        <label for="comment" class="required">Votre avis</label>
+        <textarea
+          id="comment"
+          formControlName="comment"
+          class="form-control"
+          rows="6"
+          placeholder="Partagez votre expérience avec ce produit..."
+          maxlength="1000"
+          [class.invalid]="reviewForm.get('comment')?.invalid && reviewForm.get('comment')?.touched">
+        </textarea>
+        <div class="error-text" *ngIf="reviewForm.get('comment')?.invalid && reviewForm.get('comment')?.touched">
+          <span *ngIf="reviewForm.get('comment')?.errors?.['required']">Votre avis est requis</span>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="loading">
+          Annuler
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading || reviewForm.invalid">
+          <span *ngIf="!loading">{{ isEditMode ? 'Mettre à jour' : 'Publier l\'avis' }}</span>
+          <span *ngIf="loading">
+            <i class="fas fa-spinner fa-spin"></i> {{ isEditMode ? 'Mise à jour...' : 'Publication...' }}
+          </span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
