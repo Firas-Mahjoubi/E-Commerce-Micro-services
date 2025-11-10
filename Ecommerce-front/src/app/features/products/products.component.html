@@ -1,0 +1,130 @@
+<div class="products-container">
+  <!-- Header with Cart Icon -->
+  <div class="products-header">
+    <h1>Our Products</h1>
+    <a routerLink="/cart" class="cart-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="9" cy="21" r="1"></circle>
+        <circle cx="20" cy="21" r="1"></circle>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+      </svg>
+      <span class="cart-badge" *ngIf="cartItemsCount > 0">{{ cartItemsCount }}</span>
+    </a>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>Search</label>
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onSearchChange()"
+        placeholder="Search products..." 
+        class="search-input"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label>Category</label>
+      <select [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange(selectedCategory)" class="category-select">
+        <option value="all">All Categories</option>
+        <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Price Range: ${{ filterMinPrice }} - ${{ filterMaxPrice }}</label>
+      <div class="price-range-inputs">
+        <input 
+          type="number" 
+          [(ngModel)]="filterMinPrice"
+          (ngModelChange)="onPriceRangeChange()"
+          [min]="minPrice"
+          [max]="maxPrice"
+          placeholder="Min"
+          class="price-input"
+        />
+        <span>-</span>
+        <input 
+          type="number" 
+          [(ngModel)]="filterMaxPrice"
+          (ngModelChange)="onPriceRangeChange()"
+          [min]="minPrice"
+          [max]="maxPrice"
+          placeholder="Max"
+          class="price-input"
+        />
+      </div>
+    </div>
+
+    <button (click)="clearFilters()" class="clear-filters-btn">Clear Filters</button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading products...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="error-state">
+    <p>{{ errorMessage }}</p>
+    <button (click)="loadProducts()" class="retry-btn">Retry</button>
+  </div>
+
+  <!-- Products Grid -->
+  <div *ngIf="!isLoading && !errorMessage" class="products-grid">
+    <div *ngIf="filteredProducts.length === 0" class="no-products">
+      <p>No products found matching your criteria.</p>
+      <button (click)="clearFilters()" class="clear-filters-btn">Clear Filters</button>
+    </div>
+
+    <div *ngFor="let product of filteredProducts" class="product-card">
+      <div class="product-image">
+        <img [src]="getDefaultImage(product)" [alt]="product.name" />
+        <span class="stock-badge" *ngIf="product.stockQuantity < 10">Only {{ product.stockQuantity }} left!</span>
+      </div>
+
+      <div class="product-info">
+        <h3 class="product-name">{{ product.name }}</h3>
+        <p class="product-category">{{ product.category }}</p>
+        <p class="product-description">{{ product.description | slice:0:100 }}{{ product.description.length > 100 ? '...' : '' }}</p>
+        
+        <div class="product-footer">
+          <div class="price-section">
+            <span class="product-price">${{ product.price }}</span>
+            <span class="stock-info">{{ product.stockQuantity }} in stock</span>
+          </div>
+
+          <div class="product-actions">
+            <button 
+              [routerLink]="['/products', product.id]" 
+              class="details-btn"
+            >
+              View Details
+            </button>
+            
+            <button 
+              (click)="addToCart(product)"
+              [disabled]="product.stockQuantity === 0"
+              [class.in-cart]="isInCart(product.id)"
+              class="add-to-cart-btn"
+            >
+              <svg *ngIf="!isInCart(product.id)" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+              <svg *ngIf="isInCart(product.id)" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              {{ isInCart(product.id) ? 'In Cart' : 'Add to Cart' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

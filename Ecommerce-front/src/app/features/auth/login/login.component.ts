@@ -30,8 +30,8 @@ export class LoginComponent {
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
 
-    // Get return url from route parameters or default to dashboard
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+    // Get return url from route parameters or default to products
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/products';
   }
 
   get username() {
@@ -56,16 +56,26 @@ export class LoginComponent {
     this.errorMessage = '';
 
     const loginData = this.loginForm.value as LoginRequest;
+    console.log('[LoginComponent] Attempting login with username:', loginData.username);
 
     this.authService.login(loginData).subscribe({
       next: (response: AuthResponse) => {
-        console.log('Login successful', response);
-        this.router.navigate([this.returnUrl]);
+        console.log('[LoginComponent] Login successful', response);
+        console.log('[LoginComponent] User roles:', response.user?.roles);
+        
+        // Small delay to ensure localStorage is saved
+        setTimeout(() => {
+          // Redirect based on user role
+          this.authService.redirectByRole();
+        }, 100);
       },
       error: (error: Error) => {
-        console.error('Login error', error);
+        console.error('[LoginComponent] Login error:', error);
         this.errorMessage = error.message || 'Invalid username or password. Please try again.';
         this.isLoading = false;
+      },
+      complete: () => {
+        console.log('[LoginComponent] Login request completed');
       }
     });
   }
