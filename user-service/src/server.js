@@ -7,8 +7,10 @@ require('dotenv').config();
 
 const keycloakConfig = require('./config/keycloak.config');
 const keycloakMiddleware = require('./middleware/keycloak.middleware');
+const jwtMiddleware = require('./middleware/jwt.middleware');
 const errorHandler = require('./middleware/error.middleware');
 const logger = require('./utils/logger');
+const { initEureka, setupGracefulShutdown } = require('./config/eureka.config');
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -26,10 +28,11 @@ app.set('trust proxy', 1);
 
 // Middleware
 app.use(helmet()); // Security headers
-app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || '*',
-  credentials: true
-}));
+// CORS is handled by API Gateway, disable here to prevent duplicate headers
+// app.use(cors({
+//   origin: process.env.CORS_ORIGIN?.split(',') || '*',
+//   credentials: true
+// }));
 app.use(morgan('combined', { stream: logger.stream }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -55,15 +58,16 @@ app.use('/api/health', healthRoutes);
 // Public routes (no auth required)
 app.use('/api/auth', authRoutes);
 
-// Protected routes (require authentication)
-app.use('/api/users', keycloak.protect(), userRoutes);
-app.use('/api/profile', keycloak.protect(), profileRoutes);
+// Protected routes (require JWT authentication)
+app.use('/api/users', jwtMiddleware.verifyToken, userRoutes);
+app.use('/api/profile', jwtMiddleware.verifyToken, profileRoutes);
 
 // Admin routes (require admin role)
 app.get('/api/admin/users', 
-  keycloak.protect('admin'),
+  jwtMiddleware.verifyToken,
+  jwtMiddleware.requireRole('admin'),
   (req, res) => {
-    res.json({ message: 'Admin access granted', user: req.kauth.grant.access_token.content });
+    res.json({ message: 'Admin access granted', user: req.user });
   }
 );
 
@@ -93,36 +97,40 @@ const startServer = async () => {
     logger.info('✅ Database connection established successfully');
 
     // Sync database models
-    await db.sequelize.sync({ alter: true });
+    await db.sequelize.sync({ force: false });
     logger.info('✅ Database models synchronized');
 
     // Start server
-    app.listen(PORT, () => {
-      logger.info(`🚀 User Service is running on port ${PORT}`);
-      logger.info(`📍 Environment: ${process.env.NODE_ENV}`);
-      logger.info(`🔐 Keycloak URL: ${process.env.KEYCLOAK_URL}`);
-      logger.info(`🏛️  Keycloak Realm: ${process.env.KEYCLOAK_REALM}`);
-      logger.info(`📊 Database: ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
+    app.listen(PORT, async () => {
+      logger.info(`🚀 User Service started on port ${PORT}`);
+      logger.info(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      logger.info(`🔐 Keycloak: ${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}`);
+      logger.info(`🗄️  Database: ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
+
+      // Register with Eureka if enabled
+      if (process.env.EUREKA_ENABLED === 'true') {
+        try {
+          await initEureka();
+          logger.info('✅ Registered with Eureka Discovery Server');
+          setupGracefulShutdown();
+        } catch (error) {
+          logger.error(`❌ Failed to register with Eureka: ${error.message}`);
+          logger.warn('⚠️ Service will continue without Eureka registration');
+        }
+      } else {
+        logger.info('ℹ️  Eureka registration is disabled');
+      }
+
+      logger.info('✅ User Service is ready to accept requests');
     });
   } catch (error) {
-    logger.error('❌ Failed to start server:', error);
+    logger.error(`❌ Failed to start server: ${error.message}`);
     process.exit(1);
   }
 };
 
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  logger.info('SIGTERM signal received: closing HTTP server');
-  await db.sequelize.close();
-  process.exit(0);
-});
-
-process.on('SIGINT', async () => {
-  logger.info('SIGINT signal received: closing HTTP server');
-  await db.sequelize.close();
-  process.exit(0);
-});
-
+// Start the server
 startServer();
 
 module.exports = app;
+

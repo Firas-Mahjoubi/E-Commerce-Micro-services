@@ -22,4 +22,5 @@ public class ProductRequest {
     private List<String> imageUrls;
     private Integer stockQuantity;
     private Boolean active;
+    private String sellerId;
 }

@@ -1,0 +1,207 @@
+<div class="profile-container">
+  <div class="profile-header">
+    <h1>Seller Profile</h1>
+    <p class="subtitle">Manage your account information</p>
+  </div>
+
+  <div *ngIf="isLoading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading profile...</p>
+  </div>
+
+  <div *ngIf="!isLoading && user" class="profile-content">
+    <!-- Profile Card -->
+    <div class="profile-card">
+      <div class="profile-avatar">
+        <div class="avatar-circle">
+          {{ getInitials() }}
+        </div>
+        <div class="profile-info">
+          <h2>{{ user.firstName }} {{ user.lastName }}</h2>
+          <p class="role-badge">{{ user.role | titlecase }}</p>
+          <p class="username">{{ '@' + user.username }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Form -->
+    <div class="form-card">
+      <div class="form-header">
+        <h3>Personal Information</h3>
+        <button 
+          *ngIf="!isEditMode" 
+          (click)="enableEditMode()" 
+          class="btn-edit">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Edit Profile
+        </button>
+      </div>
+
+      <div *ngIf="successMessage" class="alert alert-success">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        {{ successMessage }}
+      </div>
+
+      <div *ngIf="errorMessage" class="alert alert-error">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        {{ errorMessage }}
+      </div>
+
+      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>First Name <span class="required">*</span></label>
+            <input 
+              type="text" 
+              formControlName="firstName"
+              [readonly]="!isEditMode"
+              [class.readonly]="!isEditMode"
+              placeholder="Enter first name">
+            <div *ngIf="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched" class="error-text">
+              First name is required (min 2 characters)
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Last Name <span class="required">*</span></label>
+            <input 
+              type="text" 
+              formControlName="lastName"
+              [readonly]="!isEditMode"
+              [class.readonly]="!isEditMode"
+              placeholder="Enter last name">
+            <div *ngIf="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched" class="error-text">
+              Last name is required (min 2 characters)
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Email <span class="required">*</span></label>
+            <input 
+              type="email" 
+              formControlName="email"
+              [readonly]="!isEditMode"
+              [class.readonly]="!isEditMode"
+              placeholder="Enter email">
+            <div *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched" class="error-text">
+              Valid email is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Phone</label>
+            <input 
+              type="tel" 
+              formControlName="phone"
+              [readonly]="!isEditMode"
+              [class.readonly]="!isEditMode"
+              placeholder="Enter phone number">
+          </div>
+
+          <div class="form-group full-width">
+            <label>Address</label>
+            <textarea 
+              formControlName="address"
+              [readonly]="!isEditMode"
+              [class.readonly]="!isEditMode"
+              placeholder="Enter address"
+              rows="3"></textarea>
+          </div>
+        </div>
+
+        <div *ngIf="isEditMode" class="form-actions">
+          <button type="button" (click)="cancelEdit()" class="btn-secondary" [disabled]="isSaving">
+            Cancel
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="isSaving || profileForm.invalid">
+            <span *ngIf="!isSaving">Save Changes</span>
+            <span *ngIf="isSaving">Saving...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Change Password Section -->
+    <div class="form-card">
+      <div class="form-header">
+        <h3>Security</h3>
+        <button 
+          (click)="togglePasswordForm()" 
+          class="btn-secondary">
+          {{ showPasswordForm ? 'Cancel' : 'Change Password' }}
+        </button>
+      </div>
+
+      <div *ngIf="showPasswordForm">
+        <div *ngIf="passwordSuccessMessage" class="alert alert-success">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          {{ passwordSuccessMessage }}
+        </div>
+
+        <div *ngIf="passwordErrorMessage" class="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          {{ passwordErrorMessage }}
+        </div>
+
+        <form [formGroup]="passwordForm" (ngSubmit)="onPasswordSubmit()">
+          <div class="form-group">
+            <label>Current Password <span class="required">*</span></label>
+            <input 
+              type="password" 
+              formControlName="currentPassword"
+              placeholder="Enter current password">
+            <div *ngIf="passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched" class="error-text">
+              Current password is required (min 6 characters)
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>New Password <span class="required">*</span></label>
+            <input 
+              type="password" 
+              formControlName="newPassword"
+              placeholder="Enter new password">
+            <div *ngIf="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched" class="error-text">
+              New password is required (min 6 characters)
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Confirm New Password <span class="required">*</span></label>
+            <input 
+              type="password" 
+              formControlName="confirmPassword"
+              placeholder="Confirm new password">
+            <div *ngIf="passwordForm.get('confirmPassword')?.hasError('passwordMismatch') && passwordForm.get('confirmPassword')?.touched" class="error-text">
+              Passwords do not match
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="isSaving || passwordForm.invalid">
+              <span *ngIf="!isSaving">Update Password</span>
+              <span *ngIf="isSaving">Updating...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

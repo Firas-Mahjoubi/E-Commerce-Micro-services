@@ -1,0 +1,152 @@
+<div class="user-list-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div>
+        <h1>{{ pageTitle }}</h1>
+        <p class="subtitle">{{ pageSubtitle }}</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" routerLink="/admin/users/create">
+          <i class="fas fa-user-plus"></i>
+          Create New User
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input
+        type="text"
+        placeholder="Search by username, email, or name..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+      />
+    </div>
+
+    <div class="filter-group">
+      <select [(ngModel)]="roleFilter" (change)="onRoleFilterChange()" class="filter-select">
+        <option value="all">All Roles</option>
+        <option value="customer">Customers</option>
+        <option value="seller">Sellers</option>
+        <option value="admin">Admins</option>
+      </select>
+
+      <select [(ngModel)]="statusFilter" (change)="onStatusFilterChange()" class="filter-select">
+        <option value="all">All Status</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading users...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-message">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ error }}
+  </div>
+
+  <!-- Users Table -->
+  <div *ngIf="!loading && !error" class="table-container">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Joined</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of paginatedUsers" class="user-row">
+          <td>
+            <div class="user-cell">
+              <div class="user-avatar">{{ getInitials(user) }}</div>
+              <div class="user-info">
+                <div class="user-name">{{ user.firstName }} {{ user.lastName }}</div>
+                <div class="user-username">{{ '@' + user.username }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="email-cell">
+              <i class="fas fa-envelope"></i>
+              {{ user.email }}
+            </div>
+          </td>
+          <td>
+            <span class="role-badge" [ngClass]="getRoleBadgeClass(user.roles)">
+              {{ getRoleDisplay(user.roles) }}
+            </span>
+          </td>
+          <td>
+            <span class="status-badge" [ngClass]="getStatusBadgeClass(user.enabled)">
+              {{ user.enabled ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td class="date-cell">
+            <i class="fas fa-calendar"></i>
+            {{ formatDate(user.createdAt) }}
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-icon" (click)="viewUser(user.id)" title="View Details">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="btn-icon" (click)="editUser(user.id)" title="Edit User">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn-icon btn-delete" (click)="deleteUser(user)" title="Delete User">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredUsers.length === 0" class="empty-state">
+      <i class="fas fa-users-slash"></i>
+      <h3>No users found</h3>
+      <p>Try adjusting your search or filters</p>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="filteredUsers.length > 0" class="pagination">
+      <div class="pagination-info">
+        Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to 
+        {{ getEndItem() }} 
+        of {{ filteredUsers.length }} users
+      </div>
+      <div class="pagination-controls">
+        <button 
+          class="btn-page" 
+          [disabled]="currentPage === 1"
+          (click)="previousPage()"
+        >
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button 
+          class="btn-page" 
+          [disabled]="currentPage === totalPages"
+          (click)="nextPage()"
+        >
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

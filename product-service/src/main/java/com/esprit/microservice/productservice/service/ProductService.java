@@ -39,26 +39,26 @@ public class ProductService {
                 .imageUrls(productRequest.getImageUrls())
                 .stockQuantity(productRequest.getStockQuantity() != null ? productRequest.getStockQuantity() : 0)
                 .active(productRequest.getActive() != null ? productRequest.getActive() : true)
+                .sellerId(productRequest.getSellerId())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
-        
+
         product = productRepository.save(product);
-        
+
         // Send Kafka event to create inventory (Asynchronous)
         ProductCreatedEvent createdEvent = ProductCreatedEvent.builder()
                 .productId(product.getId())
                 .skuCode(product.getSkuCode())
                 .name(product.getName())
                 .quantity(product.getStockQuantity())
+                .sellerId(product.getSellerId())  // ✅ ADD THIS to event too
                 .build();
         kafkaTemplate.send("product-created-topic", createdEvent);
-        
+
         // Also send notification event
-        kafkaTemplate.send("notificationTopic", new ProductPlacedEvent(product.getId()));
-        
-        log.info("Product {} is created with skuCode {}", product.getId(), product.getSkuCode());
-        
+        kafkaTemplate.send("notificationTopic", new ProductPlacedEvent(product.getId()));        
+        log.info("Product {} is created with skuCode {} by seller {}", product.getId(), product.getSkuCode(), product.getSellerId());
         return mapToProductResponse(product);
     }
 
@@ -109,6 +109,9 @@ public class ProductService {
         product.setImageUrls(productRequest.getImageUrls());
         product.setStockQuantity(productRequest.getStockQuantity());
         product.setActive(productRequest.getActive());
+        if (productRequest.getSellerId() != null) {
+            product.setSellerId(productRequest.getSellerId());
+        }
         product.setUpdatedAt(LocalDateTime.now());
         
         product = productRepository.save(product);
@@ -175,6 +178,18 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    // READ - Get products by seller ID
+    public List<ProductResponse> getProductsBySeller(String sellerId) {
+        log.info("Fetching products for seller: {}", sellerId);
+        List<Product> products = productRepository.findAll().stream()
+                .filter(p -> p.getSellerId() != null && p.getSellerId().equals(sellerId))
+                .collect(Collectors.toList());
+        log.info("Found {} products for seller {}", products.size(), sellerId);
+        return products.stream()
+                .map(this::mapToProductResponseWithInventory)
+                .collect(Collectors.toList());
+    }
+
     // Helper method to map Product to ProductResponse with inventory check (OpenFeign - Synchronous)
     private ProductResponse mapToProductResponseWithInventory(Product product) {
         ProductResponse response = mapToProductResponse(product);
@@ -207,9 +222,11 @@ public class ProductService {
                 .imageUrls(product.getImageUrls())
                 .stockQuantity(product.getStockQuantity())
                 .active(product.getActive())
+                .sellerId(product.getSellerId())
                 .inStock(false)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
+                .sellerId(product.getSellerId())
                 .build();
     }
 }
