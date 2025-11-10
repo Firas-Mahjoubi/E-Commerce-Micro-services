@@ -1,0 +1,77 @@
+<!-- Place as add-voucher.component.html in the same component folder.
+     Uses classes similar to typical login/register styles: auth-container, auth-card, form-group, btn-primary -->
+<div class="auth-container">
+  <div class="auth-card">
+    <h2 class="auth-title">Add Voucher</h2>
+
+    <!-- only bind when form is initialized -->
+    <form *ngIf="voucherForm" [formGroup]="voucherForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="form-group">
+        <label for="code">Code</label>
+        <input id="code" type="text" formControlName="code" class="form-control" placeholder="e.g. SAVE10" />
+        <div class="form-error" *ngIf="f['code'].touched && f['code'].invalid">
+          <small *ngIf="f['code'].errors?.['required']">Code is required.</small>
+          <small *ngIf="f['code'].errors?.['maxlength']">Code is too long.</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" formControlName="description" class="form-control" rows="2"></textarea>
+        <div class="form-error" *ngIf="f['description'].touched && f['description'].invalid">
+          <small *ngIf="f['description'].errors?.['required']">Description is required.</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col">
+          <label for="discountPercentage">Discount (%)</label>
+          <input id="discountPercentage" type="number" formControlName="discountPercentage" class="form-control" min="0" max="100" />
+          <div class="form-error" *ngIf="f['discountPercentage'].touched && f['discountPercentage'].invalid">
+            <small *ngIf="f['discountPercentage'].errors?.['required']">Discount is required.</small>
+            <small *ngIf="f['discountPercentage'].errors?.['min']">Must be ≥ 0.</small>
+            <small *ngIf="f['discountPercentage'].errors?.['max']">Must be ≤ 100.</small>
+          </div>
+        </div>
+
+        <div class="form-group col">
+          <label for="applicableCategory">Applicable Category</label>
+          <input id="applicableCategory" type="text" formControlName="applicableCategory" class="form-control" placeholder="Optional" />
+          <div class="form-error" *ngIf="f['applicableCategory'].touched && f['applicableCategory'].invalid">
+            <small *ngIf="f['applicableCategory'].errors?.['required']">Category is required.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col">
+          <label for="startDate">Start Date</label>
+          <input id="startDate" type="datetime-local" formControlName="startDate" class="form-control" />
+          <div class="form-error" *ngIf="f['startDate'].touched && f['startDate'].invalid">
+            <small *ngIf="f['startDate'].errors?.['required']">Start date is required.</small>
+          </div>
+        </div>
+
+        <div class="form-group col">
+          <label for="endDate">End Date</label>
+          <input id="endDate" type="datetime-local" formControlName="endDate" class="form-control" />
+          <div class="form-error" *ngIf="f['endDate'].touched && f['endDate'].invalid">
+            <small *ngIf="f['endDate'].errors?.['required']">End date is required.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group inline">
+        <label>
+          <input type="checkbox" formControlName="active" /> Active
+        </label>
+      </div>
+
+      <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+      <button type="submit" class="btn btn-primary" [disabled]="submitting">
+        {{ submitting ? 'Saving...' : 'Add Voucher' }}
+      </button>
+    </form>
+  </div>
+</div>
