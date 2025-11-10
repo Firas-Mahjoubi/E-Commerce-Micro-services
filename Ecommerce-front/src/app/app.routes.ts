@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from '@core/guards/auth.guard';
+import { AddVoucherComponent } from './features/voucher/add-voucher/add-voucher.component';
 
 export const routes: Routes = [
   {
@@ -22,8 +23,12 @@ export const routes: Routes = [
     loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [authGuard]
   },
+    { path: 'addvoucher', component: AddVoucherComponent
+      
+    },
   {
     path: '**',
     redirectTo: '/login'
   }
+
 ];

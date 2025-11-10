@@ -13,7 +13,7 @@
       <div class="user-section">
         <div class="user-info" *ngIf="currentUser">
           <div class="user-avatar">
-            {{ currentUser.firstName?.charAt(0) || currentUser.username.charAt(0) }}
+            {{ currentUser.firstName?.slice(0, 1) || currentUser.username?.slice(0, 1) }}
           </div>
           <div class="user-details">
             <p class="user-name">{{ currentUser.firstName }} {{ currentUser.lastName }}</p>

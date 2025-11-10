@@ -11,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/voucher")
+@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class VoucherController {
 
