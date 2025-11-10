@@ -86,7 +86,7 @@ export class AddVoucherComponent implements OnInit {
         this.successMessage = 'Voucher created successfully!';
         this.isSaving = false;
         setTimeout(() => {
-          this.router.navigate(['/vouchers']);
+          this.router.navigate(['/seller/vouchers']);
         }, 1200);
       },
       error: (error) => {
