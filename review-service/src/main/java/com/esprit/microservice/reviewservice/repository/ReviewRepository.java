@@ -13,4 +13,10 @@ public interface ReviewRepository extends MongoRepository<Review, String> {
     List<Review> findByProductIdAndVerified(String productId, Boolean verified);
     List<Review> findByRating(Integer rating);
     List<Review> findByProductIdOrderByCreatedAtDesc(String productId);
+    List<Review> findByProductIdAndRatingBetween(String productId, Integer minRating, Integer maxRating);
+    List<Review> findByVerifiedOrderByCreatedAtDesc(Boolean verified);
+    List<Review> findByCreatedAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
+    long countByProductId(String productId);
+    long countByProductIdAndRating(String productId, Integer rating);
+    List<Review> findByProductIdIn(List<String> productIds);
 }

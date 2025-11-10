@@ -220,7 +220,6 @@ public class ProductService {
                 .inStock(false)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
-                .sellerId(product.getSellerId())
                 .build();
     }
 }

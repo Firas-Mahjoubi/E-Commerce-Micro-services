@@ -104,5 +104,80 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getRatingDistribution(productId));
     }
 
+    // ADVANCED - Get reviews by rating range for product
+    @GetMapping("/product/{productId}/rating-range")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<ReviewResponse>> getReviewsByRatingRange(
+            @PathVariable String productId,
+            @RequestParam Integer minRating,
+            @RequestParam Integer maxRating) {
+        return ResponseEntity.ok(reviewService.getReviewsByRatingRange(productId, minRating, maxRating));
+    }
+
+    // ADVANCED - Get recent verified reviews
+    @GetMapping("/recent-verified")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<ReviewResponse>> getRecentVerifiedReviews(
+            @RequestParam(defaultValue = "10") Integer limit) {
+        return ResponseEntity.ok(reviewService.getRecentVerifiedReviews(limit));
+    }
+
+    // ADVANCED - Get reviews within date range
+    @GetMapping("/date-range")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<ReviewResponse>> getReviewsByDateRange(
+            @RequestParam String startDate,
+            @RequestParam String endDate) {
+        java.time.LocalDateTime start = java.time.LocalDateTime.parse(startDate);
+        java.time.LocalDateTime end = java.time.LocalDateTime.parse(endDate);
+        return ResponseEntity.ok(reviewService.getReviewsByDateRange(start, end));
+    }
+
+    // ADVANCED - Get review statistics for product
+    @GetMapping("/product/{productId}/statistics")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<Map<String, Object>> getReviewStatistics(@PathVariable String productId) {
+        return ResponseEntity.ok(reviewService.getReviewStatistics(productId));
+    }
+
+    // ADVANCED - Search reviews by keyword
+    @GetMapping("/search")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<ReviewResponse>> searchReviews(@RequestParam String keyword) {
+        return ResponseEntity.ok(reviewService.searchReviews(keyword));
+    }
+
+    // ADVANCED - Get top rated products
+    @GetMapping("/top-rated-products")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<Map<String, Object>>> getTopRatedProducts(
+            @RequestParam(defaultValue = "10") Integer limit) {
+        return ResponseEntity.ok(reviewService.getTopRatedProducts(limit));
+    }
+
+    // SELLER DASHBOARD - Get seller's review statistics
+    @GetMapping("/seller/{sellerId}/statistics")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<Map<String, Object>> getSellerReviewStatistics(@PathVariable String sellerId) {
+        return ResponseEntity.ok(reviewService.getSellerReviewStatistics(sellerId));
+    }
+
+    // SELLER DASHBOARD - Get seller's product reviews with pagination
+    @GetMapping("/seller/{sellerId}/reviews")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<ReviewResponse>> getSellerProductReviews(
+            @PathVariable String sellerId,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "20") Integer size) {
+        return ResponseEntity.ok(reviewService.getSellerProductReviews(sellerId, page, size));
+    }
+
+    // SELLER DASHBOARD - Get seller's review trends (last 30 days)
+    @GetMapping("/seller/{sellerId}/trends")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<Map<String, Object>> getSellerReviewTrends(@PathVariable String sellerId) {
+        return ResponseEntity.ok(reviewService.getSellerReviewTrends(sellerId));
+    }
+
 
 }
