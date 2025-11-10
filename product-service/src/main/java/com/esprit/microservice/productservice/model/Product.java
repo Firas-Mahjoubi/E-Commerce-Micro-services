@@ -28,6 +28,7 @@ public class Product {
     private List<String> imageUrls;
     private Integer stockQuantity;
     private Boolean active;
+    private String sellerId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String sellerId;

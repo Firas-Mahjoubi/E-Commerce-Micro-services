@@ -39,7 +39,7 @@ public class ProductService {
                 .imageUrls(productRequest.getImageUrls())
                 .stockQuantity(productRequest.getStockQuantity() != null ? productRequest.getStockQuantity() : 0)
                 .active(productRequest.getActive() != null ? productRequest.getActive() : true)
-                .sellerId(productRequest.getSellerId())  // ✅ ADD THIS
+                .sellerId(productRequest.getSellerId())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -57,11 +57,8 @@ public class ProductService {
         kafkaTemplate.send("product-created-topic", createdEvent);
 
         // Also send notification event
-        kafkaTemplate.send("notificationTopic", new ProductPlacedEvent(product.getId()));
-
-        log.info("Product {} is created with skuCode {} for seller {}",
-                product.getId(), product.getSkuCode(), product.getSellerId());
-
+        kafkaTemplate.send("notificationTopic", new ProductPlacedEvent(product.getId()));        
+        log.info("Product {} is created with skuCode {} by seller {}", product.getId(), product.getSkuCode(), product.getSellerId());
         return mapToProductResponse(product);
     }
 
@@ -112,6 +109,9 @@ public class ProductService {
         product.setImageUrls(productRequest.getImageUrls());
         product.setStockQuantity(productRequest.getStockQuantity());
         product.setActive(productRequest.getActive());
+        if (productRequest.getSellerId() != null) {
+            product.setSellerId(productRequest.getSellerId());
+        }
         product.setUpdatedAt(LocalDateTime.now());
         
         product = productRepository.save(product);
@@ -216,6 +216,7 @@ public class ProductService {
                 .imageUrls(product.getImageUrls())
                 .stockQuantity(product.getStockQuantity())
                 .active(product.getActive())
+                .sellerId(product.getSellerId())
                 .inStock(false)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
