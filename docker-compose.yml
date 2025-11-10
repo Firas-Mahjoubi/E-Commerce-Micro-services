@@ -80,7 +80,6 @@ services:
   # MongoDB
   # -------------------------------
 
-
 # -------------------------------
 # Networks & Volumes
 # -------------------------------
@@ -89,3 +88,4 @@ networks:
     driver: bridge
 volumes:
   postgres_data:
+

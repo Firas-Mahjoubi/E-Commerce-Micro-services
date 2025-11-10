@@ -43,23 +43,22 @@ public class ProductService {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
-        
+
         product = productRepository.save(product);
-        
+
         // Send Kafka event to create inventory (Asynchronous)
         ProductCreatedEvent createdEvent = ProductCreatedEvent.builder()
                 .productId(product.getId())
                 .skuCode(product.getSkuCode())
                 .name(product.getName())
                 .quantity(product.getStockQuantity())
+                .sellerId(product.getSellerId())  // ✅ ADD THIS to event too
                 .build();
         kafkaTemplate.send("product-created-topic", createdEvent);
-        
+
         // Also send notification event
-        kafkaTemplate.send("notificationTopic", new ProductPlacedEvent(product.getId()));
-        
+        kafkaTemplate.send("notificationTopic", new ProductPlacedEvent(product.getId()));        
         log.info("Product {} is created with skuCode {} by seller {}", product.getId(), product.getSkuCode(), product.getSellerId());
-        
         return mapToProductResponse(product);
     }
 
@@ -148,6 +147,12 @@ public class ProductService {
         
         log.info("Product {} is deleted", id);
     }
+    public List<ProductResponse> getProductsBySeller(String sellerId) {
+        List<Product> products = productRepository.findBySellerId(sellerId);
+        return products.stream()
+                .map(this::mapToProductResponse)
+                .collect(Collectors.toList());
+    }
 
     // ADVANCED - Get active products only
     public List<ProductResponse> getActiveProducts() {
@@ -227,6 +232,7 @@ public class ProductService {
                 .inStock(false)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
+                .sellerId(product.getSellerId())
                 .build();
     }
 }
