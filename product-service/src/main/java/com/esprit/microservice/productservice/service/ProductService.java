@@ -12,6 +12,9 @@ import com.esprit.microservice.productservice.model.Product;
 import com.esprit.microservice.productservice.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.kafka.core.KafkaTemplate;
 
@@ -27,6 +30,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final InventoryClient inventoryClient;
+    private final EmailService emailService;
 
     // CREATE - Create a new product
     public ProductResponse createProduct(ProductRequest productRequest) {
@@ -59,7 +63,47 @@ public class ProductService {
         // Also send notification event
         kafkaTemplate.send("notificationTopic", new ProductPlacedEvent(product.getId()));        
         log.info("Product {} is created with skuCode {} by seller {}", product.getId(), product.getSkuCode(), product.getSellerId());
+        
+        // Send email notification to seller - Extract email from JWT token
+        try {
+            String sellerEmail = getEmailFromToken();
+            if (sellerEmail != null && !sellerEmail.isEmpty()) {
+                emailService.sendProductAddedNotification(
+                    sellerEmail, 
+                    product.getName(), 
+                    product.getId()
+                );
+                log.info("Email notification sent to seller: {}", sellerEmail);
+            } else {
+                log.warn("No email found in JWT token, skipping email notification");
+            }
+        } catch (Exception e) {
+            log.error("Failed to send email notification for product {}: {}", product.getId(), e.getMessage());
+            // Don't fail the product creation if email fails
+        }
+        
         return mapToProductResponse(product);
+    }
+
+    // Helper method to extract email from JWT token
+    private String getEmailFromToken() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
+                // Try to get email from different possible claims
+                String email = jwt.getClaimAsString("email");
+                if (email == null || email.isEmpty()) {
+                    email = jwt.getClaimAsString("preferred_username");
+                }
+                if (email == null || email.isEmpty()) {
+                    email = jwt.getClaimAsString("upn");
+                }
+                return email;
+            }
+        } catch (Exception e) {
+            log.error("Error extracting email from token: {}", e.getMessage());
+        }
+        return null;
     }
 
     // READ - Get all products with inventory check (Synchronous with OpenFeign)
