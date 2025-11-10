@@ -179,6 +179,18 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    // READ - Get products by seller ID
+    public List<ProductResponse> getProductsBySeller(String sellerId) {
+        log.info("Fetching products for seller: {}", sellerId);
+        List<Product> products = productRepository.findAll().stream()
+                .filter(p -> p.getSellerId() != null && p.getSellerId().equals(sellerId))
+                .collect(Collectors.toList());
+        log.info("Found {} products for seller {}", products.size(), sellerId);
+        return products.stream()
+                .map(this::mapToProductResponseWithInventory)
+                .collect(Collectors.toList());
+    }
+
     // Helper method to map Product to ProductResponse with inventory check (OpenFeign - Synchronous)
     private ProductResponse mapToProductResponseWithInventory(Product product) {
         ProductResponse response = mapToProductResponse(product);

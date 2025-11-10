@@ -111,12 +111,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/create-user/create-user.component').then(m => m.CreateUserComponent)
       },
       {
-        path: 'users/:id',
-        loadComponent: () => import('./features/admin/user-detail/user-detail.component').then(m => m.UserDetailComponent)
+        path: 'users/edit/:id',
+        loadComponent: () => import('./features/admin/edit-user/edit-user.component').then(m => m.EditUserComponent)
       },
       {
-        path: 'users/edit/:id',
-        loadComponent: () => import('./features/admin/user-list/user-list.component').then(m => m.UserListComponent) // Placeholder - will create edit component
+        path: 'users/:id',
+        loadComponent: () => import('./features/admin/user-detail/user-detail.component').then(m => m.UserDetailComponent)
       },
       {
         path: 'customers',

@@ -94,4 +94,11 @@ public class ProductController {
             @RequestParam(defaultValue = "10") Integer threshold) {
         return ResponseEntity.ok(productService.getLowStockProducts(threshold));
     }
+
+    // SELLER - Get products by seller ID
+    @GetMapping("/seller/{sellerId}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<ProductResponse>> getProductsBySeller(@PathVariable String sellerId) {
+        return ResponseEntity.ok(productService.getProductsBySeller(sellerId));
+    }
 }
