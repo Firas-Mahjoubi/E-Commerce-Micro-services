@@ -1,5 +1,29 @@
 {
-  "/api": {
+  "/api/auth/*": {
+    "target": "http://localhost:3000/api",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/api/users/*": {
+    "target": "http://localhost:3000/api",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/api/profile/*": {
+    "target": "http://localhost:3000/api",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/api/health": {
+    "target": "http://localhost:3000/api",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/api": { 
     "target": "http://localhost:8090",
     "secure": false,
     "changeOrigin": true,
