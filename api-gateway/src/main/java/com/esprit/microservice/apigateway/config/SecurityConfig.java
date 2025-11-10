@@ -17,19 +17,20 @@ public class SecurityConfig {
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity serverHttpSecurity) {
         serverHttpSecurity
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .authorizeExchange(exchange ->
-                        exchange.pathMatchers("/eureka/**")
-                                .permitAll()
-                                .pathMatchers("/api/auth/**")  // Allow unauthenticated access to auth endpoints
-                                .permitAll()
-                                .pathMatchers("/api/health/**")  // Allow health check endpoints
-                                .permitAll()
-                                .pathMatchers("/api/product/**")  // Allow public access to products
-                                .permitAll()
-                                .pathMatchers("/api/inventory/**")  // Allow public access to inventory
-                                .permitAll()
-                                .anyExchange()
-                                .authenticated())
+                .authorizeExchange(exchange -> exchange.pathMatchers("/eureka/**")
+                        .permitAll()
+                        .pathMatchers("/api/auth/**") // Allow unauthenticated access to auth endpoints
+                        .permitAll()
+                        .pathMatchers("/api/health/**") // Allow health check endpoints
+                        .permitAll()
+                        .pathMatchers("/api/product/**") // Allow public access to products
+                        .permitAll()
+                        .pathMatchers("/api/inventory/**") // Allow public access to inventory
+                        .permitAll()
+                        .pathMatchers("/api/voucher/**") // Allow public access to vouchers
+                        .permitAll()
+                        .anyExchange()
+                        .authenticated())
                 .oauth2ResourceServer(spec -> spec.jwt(Customizer.withDefaults()));
         return serverHttpSecurity.build();
     }

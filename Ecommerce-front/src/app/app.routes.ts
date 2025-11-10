@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from '@core/guards/auth.guard';
 import { AddVoucherComponent } from './features/voucher/add-voucher/add-voucher.component';
 import { sellerGuard, adminGuard } from '@core/guards/role.guard';
+import { ListVoucherComponent } from './features/voucher/list-voucher/list-voucher.component';
 
 export const routes: Routes = [
   {
@@ -25,8 +26,9 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
     { path: 'addvoucher', component: AddVoucherComponent
-      
+
     },
+    { path: 'vouchers', component: ListVoucherComponent },
   {
     path: 'products',
     loadComponent: () => import('./features/products/products.component').then(m => m.ProductsComponent),
