@@ -1,8 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
-import { User } from '@core/models/user.model';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
@@ -11,52 +11,31 @@ import { User } from '@core/models/user.model';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit {
-  private authService = inject(AuthService);
+export class DashboardComponent implements OnInit, OnDestroy {
   private router = inject(Router);
+  private authService = inject(AuthService);
 
-  currentUser: User | null = null;
-  isLoading = true;
+  // exposed to template
+  public currentUser: any | null = null;
+  public isLoading = true;
+
+  private sub: Subscription | null = null;
 
   ngOnInit(): void {
-    this.loadUserData();
-  }
-
-  private loadUserData(): void {
-    // Try to get user from current value first
-    this.currentUser = this.authService.getCurrentUserValue();
-    
-    if (this.currentUser) {
+    this.sub = this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user || null;
       this.isLoading = false;
-      return;
-    }
-
-    // If no user in memory, try to fetch from API
-    this.authService.getCurrentUser().subscribe({
-      next: (user) => {
-        this.currentUser = user;
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Failed to load user data:', error);
-        this.isLoading = false;
-        // If failed to load user, redirect to login
-        this.router.navigate(['/login']);
-      }
     });
   }
 
-  onLogout(): void {
-    this.authService.logout().subscribe({
-      next: () => {
-        this.router.navigate(['/login']);
-      },
-      error: (error) => {
-        console.error('Logout error:', error);
-        // Even if API call fails, redirect to login
-        this.router.navigate(['/login']);
-      }
-    });
+  public onLogout(): void {
+    if (typeof this.authService.logout === 'function') {
+      this.authService.logout();
+    }
+    this.router.navigate(['/login']);
+  }
+
+  ngOnDestroy(): void {
+    this.sub?.unsubscribe();
   }
 }
-

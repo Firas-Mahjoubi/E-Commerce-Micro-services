@@ -8,9 +8,8 @@ import java.util.List;
 
 public class CreateOrderRequest {
 
-    @NotNull(message = "Customer ID is required")
-    @Positive(message = "Customer ID must be positive")
-    private Long customerId;
+    // Customer ID will be extracted from JWT token, no validation needed in request
+    private String customerId;
 
     @NotEmpty(message = "Order items cannot be empty")
     @Valid
@@ -19,17 +18,17 @@ public class CreateOrderRequest {
     // Constructeurs
     public CreateOrderRequest() {}
 
-    public CreateOrderRequest(Long customerId, List<OrderItemRequest> items) {
+    public CreateOrderRequest(String customerId, List<OrderItemRequest> items) {
         this.customerId = customerId;
         this.items = items;
     }
 
     // Getters et Setters
-    public Long getCustomerId() {
+    public String getCustomerId() {
         return customerId;
     }
 
-    public void setCustomerId(Long customerId) {
+    public void setCustomerId(String customerId) {
         this.customerId = customerId;
     }
 

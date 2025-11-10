@@ -19,13 +19,19 @@ import { AuthService } from '@core/services/auth.service';
             </svg>
             <span>Seller Portal</span>
           </a>
-          
+
           <div class="nav-links">
             <a routerLink="/seller/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
               Dashboard
             </a>
             <a routerLink="/seller/products" routerLinkActive="active">
               Products
+            </a>
+            <a routerLink="/seller/vouchers" routerLinkActive="active">
+              Vouchers
+            </a>
+            <a routerLink="/seller/vouchers/stats" routerLinkActive="active">
+              Statistics
             </a>
           </div>
         </div>

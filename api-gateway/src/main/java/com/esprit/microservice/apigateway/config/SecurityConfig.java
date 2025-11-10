@@ -21,29 +21,21 @@ public class SecurityConfig {
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity serverHttpSecurity) {
         serverHttpSecurity
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .authorizeExchange(exchange ->
-                        exchange.pathMatchers("/eureka/**")
-                                .permitAll()
-                                .pathMatchers("/api/auth/**")  // Allow unauthenticated access to auth endpoints
-                                .permitAll()
-                                .pathMatchers("/api/health/**")  // Allow health check endpoints
-                                .permitAll()
-                                .pathMatchers("/api/users/**")  // Allow access to user endpoints (user-service handles auth)
-                                .permitAll()
-                                .pathMatchers("/api/profile/**")  // Allow access to profile endpoints
-                                .permitAll()
-                                .pathMatchers("/api/product/**")  // Allow public access to products
-                                .permitAll()
-                                .pathMatchers("/api/inventory/**")  // Allow public access to inventory
-                                .permitAll()
-                                .anyExchange()
-                                .permitAll());  // Allow all other routes (each service handles its own auth)
-        
-        // Only configure OAuth2 if issuer-uri is provided
-        if (issuerUri != null && !issuerUri.trim().isEmpty()) {
-            serverHttpSecurity.oauth2ResourceServer(spec -> spec.jwt(Customizer.withDefaults()));
-        }
-        
+                .authorizeExchange(exchange -> exchange.pathMatchers("/eureka/**")
+                        .permitAll()
+                        .pathMatchers("/api/auth/**") // Allow unauthenticated access to auth endpoints
+                        .permitAll()
+                        .pathMatchers("/api/health/**") // Allow health check endpoints
+                        .permitAll()
+                        .pathMatchers("/api/product/**") // Allow public access to products
+                        .permitAll()
+                        .pathMatchers("/api/inventory/**") // Allow public access to inventory
+                        .permitAll()
+                        .pathMatchers("/api/voucher/**") // Allow public access to vouchers
+                        .permitAll()
+                        .anyExchange()
+                        .authenticated())
+                .oauth2ResourceServer(spec -> spec.jwt(Customizer.withDefaults()));
         return serverHttpSecurity.build();
     }
 

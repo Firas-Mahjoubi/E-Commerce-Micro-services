@@ -44,6 +44,13 @@ const verifySimpleToken = (token) => {
 
 // Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
+  // Skip JWT validation if internal API key is present
+  const internalApiKey = req.headers['x-internal-api-key'];
+  if (internalApiKey === process.env.INTERNAL_API_KEY) {
+    logger.info('Internal service request detected, skipping JWT validation');
+    return next();
+  }
+
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
