@@ -2,6 +2,7 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
       <profile name="Maven default annotation processors profile" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
@@ -9,6 +10,7 @@
         <module name="api-gateway" />
         <module name="config-server" />
         <module name="eureka-server" />
+        <module name="refund-service" />
         <module name="review-service" />
       </profile>
       <profile name="Annotation profile for order-service" enabled="true">
@@ -21,7 +23,6 @@
         <module name="order-service" />
       </profile>
       <profile name="Annotation profile for voucher-service" enabled="true">
-      <profile name="Annotation profile for inventory-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -31,7 +32,6 @@
         <module name="voucher-service" />
         <module name="product-service" />
         <module name="inventory-service" />
-        <module name="refund-service" />
       </profile>
     </annotationProcessing>
   </component>
@@ -43,8 +43,6 @@
       <module name="inventory-service" options="-parameters" />
       <module name="order-service" options="-parameters" />
       <module name="product-service" options="-parameters" />
-      <module name="refund-service" options="-parameters" />
-      <module name="review-service" options="-parameters" />
       <module name="voucher-service" options="-parameters" />
     </option>
   </component>
