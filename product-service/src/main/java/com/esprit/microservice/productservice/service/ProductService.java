@@ -147,12 +147,6 @@ public class ProductService {
         
         log.info("Product {} is deleted", id);
     }
-    public List<ProductResponse> getProductsBySeller(String sellerId) {
-        List<Product> products = productRepository.findBySellerId(sellerId);
-        return products.stream()
-                .map(this::mapToProductResponse)
-                .collect(Collectors.toList());
-    }
 
     // ADVANCED - Get active products only
     public List<ProductResponse> getActiveProducts() {
