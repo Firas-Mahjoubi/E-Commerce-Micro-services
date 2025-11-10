@@ -25,9 +25,7 @@ public class ProductController {
     // CREATE - Create a new product
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<ProductResponse> createProduct(
-            @RequestBody ProductRequest productRequest,
-            HttpServletRequest request) {  // ✅ ADD HttpServletRequest parameter
+    public ResponseEntity<ProductResponse> createProduct(@RequestBody ProductRequest productRequest, HttpServletRequest request) {  // ✅ ADD HttpServletRequest parameter
 
         try {
             // ✅ Extract seller ID from JWT token
@@ -185,5 +183,12 @@ public class ProductController {
     public ResponseEntity<List<ProductResponse>> getLowStockProducts(
             @RequestParam(defaultValue = "10") Integer threshold) {
         return ResponseEntity.ok(productService.getLowStockProducts(threshold));
+    }
+
+    // SELLER - Get products by seller ID
+    @GetMapping("/seller/{sellerId}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<ProductResponse>> getProductsBySeller(@PathVariable String sellerId) {
+        return ResponseEntity.ok(productService.getProductsBySeller(sellerId));
     }
 }

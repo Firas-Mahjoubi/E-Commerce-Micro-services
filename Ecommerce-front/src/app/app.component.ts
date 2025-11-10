@@ -26,17 +26,18 @@ export class AppComponent {
       .subscribe((event: any) => {
         const url = event.url;
         
-        // Show seller navbar on seller routes
-        this.showSellerNavbar = url.includes('/seller');
+        // Priority: Admin routes take precedence over seller routes
+        // Check admin first (more specific check to avoid /admin/sellers matching /seller)
+        this.showAdminNavbar = url.startsWith('/admin');
         
-        // Show admin navbar on admin routes
-        this.showAdminNavbar = url.includes('/admin');
+        // Show seller navbar only on actual seller routes (not admin/sellers)
+        this.showSellerNavbar = url.startsWith('/seller') && !this.showAdminNavbar;
         
         // Show customer navbar on customer pages (not on auth/seller/admin pages)
         this.showNavbar = !url.includes('/login') && 
                          !url.includes('/register') && 
-                         !url.includes('/seller') && 
-                         !url.includes('/admin');
+                         !this.showSellerNavbar && 
+                         !this.showAdminNavbar;
       });
   }
 }

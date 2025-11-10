@@ -52,6 +52,10 @@
   text-decoration: none;
 }
 
+.btn i {
+  font-size: 1rem;
+}
+
 .btn-primary {
   background: white;
   color: #667eea;
@@ -127,8 +131,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   color: white;
+  flex-shrink: 0;
+}
+
+.stat-icon i {
+  display: block;
 }
 
 .stat-icon.total-users { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
@@ -193,10 +202,16 @@
 }
 
 .action-card i {
-  font-size: 2rem;
+  font-size: 2.5rem;
   color: #667eea;
   margin-bottom: 1rem;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 12px;
 }
 
 .action-card h3 {
@@ -241,10 +256,20 @@
   align-items: center;
   gap: 0.5rem;
   transition: color 0.3s;
+  font-size: 0.95rem;
+}
+
+.view-all i {
+  font-size: 0.85rem;
+  transition: transform 0.3s;
 }
 
 .view-all:hover {
   color: #764ba2;
+}
+
+.view-all:hover i {
+  transform: translateX(4px);
 }
 
 .users-list {
@@ -336,6 +361,10 @@
   gap: 0.35rem;
 }
 
+.join-date i {
+  font-size: 0.8rem;
+}
+
 .user-actions {
   display: flex;
   gap: 0.5rem;
@@ -353,12 +382,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 0.9rem;
+}
+
+.btn-icon i {
+  display: block;
 }
 
 .btn-icon:hover {
   background: #667eea;
   color: white;
   transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 /* Responsive Design */
