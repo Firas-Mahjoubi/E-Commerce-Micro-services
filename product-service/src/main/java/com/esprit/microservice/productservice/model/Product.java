@@ -31,4 +31,5 @@ public class Product {
     private String sellerId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String sellerId;
 }
