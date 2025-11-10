@@ -147,6 +147,35 @@ exports.deleteCurrentUser = async (req, res, next) => {
   }
 };
 
+// Get user basic info for notifications (authenticated users can access)
+exports.getUserBasicInfo = async (req, res, next) => {
+  try {
+    const userId = req.params.userId;
+
+    const user = await db.User.findOne({
+      where: { keycloak_id: userId },
+      attributes: ['keycloak_id', 'username', 'email', 'first_name', 'last_name']
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      id: user.keycloak_id,
+      username: user.username,
+      email: user.email,
+      firstName: user.first_name,
+      lastName: user.last_name
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Get all users (admin only)
 exports.getAllUsers = async (req, res, next) => {
   try {

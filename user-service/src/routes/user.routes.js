@@ -8,6 +8,9 @@ router.get('/me', userController.getCurrentUser);
 router.put('/me', userController.updateCurrentUser);
 router.delete('/me', userController.deleteCurrentUser);
 
+// Get user basic info for notifications (authenticated users can access)
+router.get('/:userId/basic', userController.getUserBasicInfo);
+
 // Admin routes (require admin role)
 router.get('/', requireRole('admin'), userController.getAllUsers);
 router.get('/:id', requireRole('admin'), userController.getUserById);
