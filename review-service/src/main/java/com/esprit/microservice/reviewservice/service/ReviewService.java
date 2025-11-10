@@ -1,9 +1,11 @@
 package com.esprit.microservice.reviewservice.service;
 
 import com.esprit.microservice.reviewservice.client.ProductClient;
+import com.esprit.microservice.reviewservice.client.UserClient;
 import com.esprit.microservice.reviewservice.dto.ProductResponse;
 import com.esprit.microservice.reviewservice.dto.ReviewRequest;
 import com.esprit.microservice.reviewservice.dto.ReviewResponse;
+import com.esprit.microservice.reviewservice.dto.UserResponse;
 import com.esprit.microservice.reviewservice.model.Review;
 import com.esprit.microservice.reviewservice.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final ProductClient productClient;
+    private final UserClient userClient;
 
     // CREATE - Create a new review
     public ReviewResponse createReview(ReviewRequest reviewRequest) {
@@ -33,9 +36,20 @@ public class ReviewService {
             throw new RuntimeException("Product not found");
         }
 
-        // If userId is provided, check for duplicate reviews
+        // If userId is provided, check for duplicate reviews and fetch user info
         String userName = "Anonymous";
         if (reviewRequest.getUserId() != null && !reviewRequest.getUserId().isEmpty()) {
+            // Fetch user info from user-service
+            UserResponse user;
+            try {
+                user = userClient.getUserById(reviewRequest.getUserId());
+                userName = user.getFirstName() + " " + user.getLastName();
+            } catch (Exception e) {
+                log.warn("User not found with id: {}, using Anonymous", reviewRequest.getUserId());
+                // Don't throw exception, just use Anonymous
+                userName = "Anonymous";
+            }
+
             // Check if user already reviewed this product
             List<Review> existingReviews = reviewRepository.findByProductId(reviewRequest.getProductId())
                     .stream()
@@ -45,7 +59,6 @@ public class ReviewService {
             if (!existingReviews.isEmpty()) {
                 throw new RuntimeException("User has already reviewed this product");
             }
-            userName = "User"; // Simplified, since no user service call
         }
 
         Review review = Review.builder()
@@ -76,7 +89,7 @@ public class ReviewService {
     }
 
     // READ - Get review by ID
-    public ReviewResponse getReviewById(String id) {
+    public ReviewResponse getReviewById(Long id) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Review not found with id: " + id));
         return mapToReviewResponseWithProduct(review);
@@ -107,7 +120,7 @@ public class ReviewService {
     }
 
     // UPDATE - Update review
-    public ReviewResponse updateReview(String id, ReviewRequest reviewRequest) {
+    public ReviewResponse updateReview(Long id, ReviewRequest reviewRequest) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Review not found with id: " + id));
 
@@ -130,7 +143,7 @@ public class ReviewService {
     }
 
     // UPDATE - Update anonymous review
-    public ReviewResponse updateReviewAnonymous(String id, ReviewRequest reviewRequest) {
+    public ReviewResponse updateReviewAnonymous(Long id, ReviewRequest reviewRequest) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Review not found with id: " + id));
 
@@ -149,7 +162,7 @@ public class ReviewService {
     }
 
     // DELETE - Delete review
-    public void deleteReview(String id, String userId) {
+    public void deleteReview(Long id, String userId) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Review not found with id: " + id));
 
@@ -164,7 +177,7 @@ public class ReviewService {
     }
 
     // DELETE - Delete anonymous review
-    public void deleteReviewAnonymous(String id) {
+    public void deleteReviewAnonymous(Long id) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Review not found with id: " + id));
 

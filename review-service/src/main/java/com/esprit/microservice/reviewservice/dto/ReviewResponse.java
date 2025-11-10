@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReviewResponse {
-    private String id;
+    private Long id;
     private ProductInfo product;
     private String userId;
     private String userName;

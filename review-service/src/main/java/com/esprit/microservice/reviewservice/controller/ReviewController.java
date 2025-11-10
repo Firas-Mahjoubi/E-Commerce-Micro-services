@@ -40,7 +40,7 @@ public class ReviewController {
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<ReviewResponse> getReviewById(@PathVariable String id) {
-        return ResponseEntity.ok(reviewService.getReviewById(id));
+        return ResponseEntity.ok(reviewService.getReviewById(Long.parseLong(id)));
     }
 
     // READ - Get reviews by product ID
@@ -72,9 +72,9 @@ public class ReviewController {
             @Valid @RequestBody ReviewRequest reviewRequest) {
         // For anonymous reviews, allow update without userId validation
         if (reviewRequest.getUserId() == null || reviewRequest.getUserId().isEmpty()) {
-            return ResponseEntity.ok(reviewService.updateReviewAnonymous(id, reviewRequest));
+            return ResponseEntity.ok(reviewService.updateReviewAnonymous(Long.parseLong(id), reviewRequest));
         }
-        return ResponseEntity.ok(reviewService.updateReview(id, reviewRequest));
+        return ResponseEntity.ok(reviewService.updateReview(Long.parseLong(id), reviewRequest));
     }
 
     // DELETE - Delete review
@@ -83,9 +83,9 @@ public class ReviewController {
     public ResponseEntity<Void> deleteReview(@PathVariable String id, @RequestParam(required = false) String userId) {
         // For anonymous reviews, allow deletion without userId
         if (userId == null || userId.isEmpty()) {
-            reviewService.deleteReviewAnonymous(id);
+            reviewService.deleteReviewAnonymous(Long.parseLong(id));
         } else {
-            reviewService.deleteReview(id, userId);
+            reviewService.deleteReview(Long.parseLong(id), userId);
         }
         return ResponseEntity.noContent().build();
     }
