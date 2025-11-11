@@ -1,0 +1,160 @@
+<div class="checkout-container">
+  <div class="checkout-header">
+    <button class="back-button" (click)="goBack()">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        fill="currentColor"
+        viewBox="0 0 16 16"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"
+        />
+      </svg>
+      Back to Cart
+    </button>
+    <h1>Checkout</h1>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      fill="currentColor"
+      viewBox="0 0 16 16"
+    >
+      <path
+        d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"
+      />
+      <path
+        d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"
+      />
+    </svg>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      fill="currentColor"
+      viewBox="0 0 16 16"
+    >
+      <path
+        d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"
+      />
+    </svg>
+    {{ successMessage }}
+  </div>
+
+  <div class="checkout-content">
+    <!-- Order Summary -->
+    <div class="order-summary">
+      <h2>Order Summary</h2>
+
+      <div class="order-items">
+        <div *ngFor="let item of cartItems" class="order-item">
+          <img
+            [src]="
+              item.product.imageUrls && item.product.imageUrls.length > 0
+                ? item.product.imageUrls[0]
+                : 'https://via.placeholder.com/80'
+            "
+            [alt]="item.product.name"
+            class="item-image"
+          />
+          <div class="item-details">
+            <h3>{{ item.product.name }}</h3>
+            <p class="item-quantity">Quantity: {{ item.quantity }}</p>
+          </div>
+          <div class="item-price">
+            <p class="price">
+              ${{ item.product.price * item.quantity | number : "1.2-2" }}
+            </p>
+            <p class="unit-price">
+              ${{ item.product.price | number : "1.2-2" }} each
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="order-total">
+        <div class="total-row">
+          <span>Subtotal:</span>
+          <span>${{ total | number : "1.2-2" }}</span>
+        </div>
+        <div class="total-row">
+          <span>Shipping:</span>
+          <span>FREE</span>
+        </div>
+        <div class="total-row total-final">
+          <span>Total:</span>
+          <span>${{ total | number : "1.2-2" }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment & Shipping Info -->
+    <div class="checkout-form">
+      <h2>Shipping Information</h2>
+      <div class="form-section">
+        <p class="info-message">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            fill="currentColor"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"
+            />
+            <path
+              d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"
+            />
+          </svg>
+          Your account information will be used for shipping
+        </p>
+      </div>
+
+      <div class="action-buttons">
+        <button
+          class="btn-place-order"
+          (click)="placeOrder()"
+          [disabled]="isLoading || cartItems.length === 0"
+        >
+          <span *ngIf="!isLoading">Place Order</span>
+          <span *ngIf="isLoading">
+            <svg
+              class="spinner"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            Processing...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
