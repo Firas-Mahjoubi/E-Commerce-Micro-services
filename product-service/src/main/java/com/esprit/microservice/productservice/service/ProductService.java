@@ -12,10 +12,9 @@ import com.esprit.microservice.productservice.model.Product;
 import com.esprit.microservice.productservice.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-// Security imports temporarily disabled
-// import org.springframework.security.core.Authentication;
-// import org.springframework.security.core.context.SecurityContextHolder;
-// import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.kafka.core.KafkaTemplate;
 
@@ -88,23 +87,22 @@ public class ProductService {
 
     // Helper method to extract email from JWT token
     private String getEmailFromToken() {
-        // Temporarily disabled - OAuth2 configuration needed
-        // try {
-        //     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        //     if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
-        //         // Try to get email from different possible claims
-        //         String email = jwt.getClaimAsString("email");
-        //         if (email == null || email.isEmpty()) {
-        //             email = jwt.getClaimAsString("preferred_username");
-        //         }
-        //         if (email == null || email.isEmpty()) {
-        //             email = jwt.getClaimAsString("upn");
-        //         }
-        //         return email;
-        //     }
-        // } catch (Exception e) {
-        //     log.error("Error extracting email from token: {}", e.getMessage());
-        // }
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
+                // Try to get email from different possible claims
+                String email = jwt.getClaimAsString("email");
+                if (email == null || email.isEmpty()) {
+                    email = jwt.getClaimAsString("preferred_username");
+                }
+                if (email == null || email.isEmpty()) {
+                    email = jwt.getClaimAsString("upn");
+                }
+                return email;
+            }
+        } catch (Exception e) {
+            log.error("Error extracting email from token: {}", e.getMessage());
+        }
         return null;
     }
 
@@ -272,6 +270,7 @@ public class ProductService {
                 .inStock(false)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
+                .sellerId(product.getSellerId())
                 .build();
     }
 }

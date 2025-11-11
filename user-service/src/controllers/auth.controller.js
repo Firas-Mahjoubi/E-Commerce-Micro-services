@@ -1,11 +1,7 @@
 const axios = require('axios');
-const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const db = require('../models');
 const logger = require('../utils/logger');
-
-const KEYCLOAK_ENABLED = process.env.KEYCLOAK_ENABLED !== 'false';
-const DEV_MODE = process.env.NODE_ENV !== 'production';
 
 const keycloakAdminClient = axios.create({
   baseURL: `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}`,
@@ -144,82 +140,7 @@ exports.login = async (req, res, next) => {
 
     const { username, password } = req.body;
 
-    // DEV MODE: Use simple authentication without Keycloak
-    if (!KEYCLOAK_ENABLED && DEV_MODE) {
-      logger.info(`[DEV MODE] Login attempt for: ${username}`);
-      
-      // Find user in local database
-      const user = await db.User.findOne({ where: { username } });
-      
-      if (!user) {
-        logger.warn(`[DEV MODE] User not found: ${username}`);
-        return res.status(401).json({
-          error: 'Unauthorized',
-          message: 'Invalid username or password'
-        });
-      }
-
-      // In dev mode, we don't verify password (INSECURE - DEV ONLY!)
-      logger.warn(`[DEV MODE] Skipping password verification for: ${username}`);
-
-      // Update last login
-      await db.User.update(
-        { last_login: new Date() },
-        { where: { id: user.id } }
-      );
-
-      // Get user roles from database or default
-      const roles = ['customer']; // Default role
-      if (user.username.includes('admin')) roles.push('admin');
-      if (user.username.includes('seller')) roles.push('seller');
-
-      // Generate simple JWT token
-      const access_token = jwt.sign(
-        {
-          sub: user.id,
-          id: user.id,
-          userId: user.id,
-          username: user.username,
-          preferred_username: user.username,
-          email: user.email,
-          given_name: user.first_name,
-          family_name: user.last_name,
-          firstName: user.first_name,
-          lastName: user.last_name,
-          roles: roles,
-          realm_access: { roles: roles },
-          email_verified: user.email_verified
-        },
-        process.env.JWT_SECRET || 'dev-secret-key',
-        { expiresIn: '24h' }
-      );
-
-      const refresh_token = jwt.sign(
-        { sub: user.id, type: 'refresh' },
-        process.env.JWT_SECRET || 'dev-secret-key',
-        { expiresIn: '7d' }
-      );
-
-      logger.info(`[DEV MODE] User logged in: ${username}`);
-
-      return res.json({
-        message: 'Login successful',
-        token_type: 'Bearer',
-        access_token,
-        refresh_token,
-        expires_in: 86400,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          firstName: user.first_name,
-          lastName: user.last_name,
-          roles: roles
-        }
-      });
-    }
-
-    // PRODUCTION MODE: Use Keycloak
+    // Get token from Keycloak
     const response = await axios.post(
       `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`,
       new URLSearchParams({

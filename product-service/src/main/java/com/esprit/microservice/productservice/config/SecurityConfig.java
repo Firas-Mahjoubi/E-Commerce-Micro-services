@@ -15,8 +15,10 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
-                        .anyRequest().permitAll()  // Allow all requests for now
-                );
+                        .requestMatchers("/api/product/**").permitAll()  // Allow public access to all product endpoints
+                        .anyRequest().authenticated()
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}));
         
         return http.build();
     }
