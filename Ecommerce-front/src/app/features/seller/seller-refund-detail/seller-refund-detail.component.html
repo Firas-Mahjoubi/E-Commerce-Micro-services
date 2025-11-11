@@ -1,0 +1,293 @@
+<div class="refund-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading refund details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="error-container">
+    <div class="alert alert-danger">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+      >
+        <path
+          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+        />
+      </svg>
+      {{ errorMessage }}
+    </div>
+    <button class="btn btn-primary" (click)="goBack()">Back to Refunds</button>
+  </div>
+
+  <!-- Success State -->
+  <div *ngIf="updateSuccess" class="alert alert-success">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+    </svg>
+    Refund status updated successfully!
+  </div>
+
+  <!-- Refund Details -->
+  <div *ngIf="refund && !isLoading" class="refund-content">
+    <!-- Header -->
+    <div class="refund-header">
+      <button class="back-btn" (click)="goBack()">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path
+            d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+          />
+        </svg>
+        Back to Refunds
+      </button>
+      <h1>Refund Request Details</h1>
+    </div>
+
+    <!-- Refund Info Card -->
+    <div class="refund-info-card">
+      <div class="refund-info-header">
+        <div class="refund-id">
+          <h2>Refund #{{ refund.refundId }}</h2>
+          <span class="status-badge" [ngClass]="getStatusClass(refund.status)">
+            {{ refund.status }}
+          </span>
+        </div>
+        <button class="btn-link-order" (click)="viewOrder()">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path
+              d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"
+            />
+          </svg>
+          View Order #{{ refund.orderId }}
+        </button>
+      </div>
+
+      <div class="refund-info-grid">
+        <div class="info-item">
+          <label>Customer ID</label>
+          <p>{{ refund.customerId }}</p>
+        </div>
+        <div class="info-item">
+          <label>Refund Date</label>
+          <p>{{ formatDate(refund.refundedAt) }}</p>
+        </div>
+        <div class="info-item">
+          <label>Refund Type</label>
+          <p>{{ refund.fullOrderRefund ? "Full Order" : "Partial" }}</p>
+        </div>
+        <div class="info-item">
+          <label>Refund Amount</label>
+          <p class="refund-amount">${{ refund.refundAmount.toFixed(2) }}</p>
+        </div>
+      </div>
+
+      <div class="reason-section">
+        <label>Customer's Reason</label>
+        <p>{{ refund.reason }}</p>
+      </div>
+    </div>
+
+    <!-- Refund Products -->
+    <div class="refund-items-section">
+      <h3>Products to Refund</h3>
+      <div class="items-list">
+        <div class="item-card" *ngFor="let productId of refund.productIds">
+          <div class="item-image">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path
+                d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+              />
+            </svg>
+          </div>
+          <div class="item-details">
+            <h4>Product ID: {{ productId }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Refund Summary -->
+    <div class="refund-summary">
+      <h3>Refund Summary</h3>
+      <div class="summary-row">
+        <span>Products Count</span>
+        <span>{{ refund.productIds.length }}</span>
+      </div>
+      <div class="summary-row">
+        <span>Refund Type</span>
+        <span>{{
+          refund.fullOrderRefund ? "Full Order Refund" : "Partial Refund"
+        }}</span>
+      </div>
+      <div class="summary-row summary-total">
+        <span>Total Refund Amount</span>
+        <span>${{ refund.refundAmount.toFixed(2) }}</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="refund-actions" *ngIf="canUpdateStatus()">
+      <h3>Update Refund Status</h3>
+      <p class="actions-subtitle">Choose an action for this refund request</p>
+
+      <div class="action-buttons">
+        <button
+          class="btn btn-approve"
+          (click)="openStatusModal(RefundStatus.APPROVED)"
+          [disabled]="isUpdatingStatus"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+          </svg>
+          Approve Refund
+        </button>
+
+        <button
+          class="btn btn-reject"
+          (click)="openStatusModal(RefundStatus.REJECTED)"
+          [disabled]="isUpdatingStatus"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path
+              d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+            />
+          </svg>
+          Reject Refund
+        </button>
+
+        <button
+          class="btn btn-complete"
+          (click)="openStatusModal(RefundStatus.COMPLETED)"
+          [disabled]="isUpdatingStatus"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+            />
+          </svg>
+          Mark as Completed
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Info -->
+    <div
+      *ngIf="refund.status.toUpperCase() === 'APPROVED'"
+      class="alert alert-info"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+      >
+        <path
+          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+        />
+      </svg>
+      This refund request has been approved and is being processed.
+    </div>
+
+    <div
+      *ngIf="refund.status.toUpperCase() === 'COMPLETED'"
+      class="alert alert-success"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+      >
+        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+      </svg>
+      This refund has been completed successfully!
+    </div>
+
+    <div
+      *ngIf="refund.status.toUpperCase() === 'REJECTED'"
+      class="alert alert-danger"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+      >
+        <path
+          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+        />
+      </svg>
+      This refund request has been rejected.
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div
+    *ngIf="selectedStatus"
+    class="modal-overlay"
+    (click)="closeStatusModal()"
+  >
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Confirm Status Update</h3>
+        <button class="close-btn" (click)="closeStatusModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <p>
+          Are you sure you want to update this refund status to
+          <strong>{{ selectedStatus }}</strong
+          >?
+        </p>
+
+        <div class="modal-actions">
+          <button
+            class="btn btn-secondary"
+            (click)="closeStatusModal()"
+            [disabled]="isUpdatingStatus"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn btn-primary"
+            (click)="updateStatus()"
+            [disabled]="isUpdatingStatus"
+          >
+            <span *ngIf="!isUpdatingStatus">Confirm</span>
+            <span *ngIf="isUpdatingStatus">
+              <span class="spinner-small"></span>
+              Updating...
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

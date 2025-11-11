@@ -18,6 +18,7 @@ public class ReviewResponse {
     private ProductInfo product;
     private String userId;
     private String userName;
+    private String userEmail;  // Email de l'utilisateur
     private Integer rating;
     private String title;
     private String comment;

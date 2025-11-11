@@ -1,0 +1,103 @@
+<div class="refunds-container">
+  <div class="refunds-header">
+    <h1>My Refund Requests</h1>
+    <p class="subtitle">View and manage your refund requests</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading refunds...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="alert alert-danger">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path
+        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+      />
+    </svg>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Empty State -->
+  <div
+    *ngIf="!isLoading && !errorMessage && refunds.length === 0"
+    class="empty-state"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path
+        d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"
+      />
+    </svg>
+    <h2>No Refund Requests</h2>
+    <p>You haven't made any refund requests yet.</p>
+    <button class="btn btn-primary" (click)="goToOrders()">View Orders</button>
+  </div>
+
+  <!-- Refunds List -->
+  <div
+    *ngIf="!isLoading && !errorMessage && refunds.length > 0"
+    class="refunds-grid"
+  >
+    <div
+      *ngFor="let refund of refunds"
+      class="refund-card"
+      (click)="viewRefundDetails(refund.refundId)"
+    >
+      <div class="refund-card-header">
+        <div class="refund-id">
+          <h3>Refund #{{ refund.refundId }}</h3>
+          <span class="status-badge" [ngClass]="getStatusClass(refund.status)">
+            {{ refund.status }}
+          </span>
+        </div>
+        <p class="refund-date">{{ formatDate(refund.refundedAt) }}</p>
+      </div>
+
+      <div class="refund-card-body">
+        <div class="info-row">
+          <span class="label">Order ID:</span>
+          <span class="value">#{{ refund.orderId }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Items:</span>
+          <span class="value">{{ refund.productIds.length }} item(s)</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Refund Amount:</span>
+          <span class="value amount"
+            >${{ refund.refundAmount.toFixed(2) }}</span
+          >
+        </div>
+        <div class="reason">
+          <span class="label">Reason:</span>
+          <p>{{ refund.reason }}</p>
+        </div>
+      </div>
+
+      <div class="refund-card-footer">
+        <button class="btn-link">
+          View Details
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path
+              d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

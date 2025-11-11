@@ -1,0 +1,187 @@
+<div class="order-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading order details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="error-container">
+    <div class="alert alert-danger">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+      >
+        <path
+          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+        />
+      </svg>
+      {{ errorMessage }}
+    </div>
+    <button class="btn btn-primary" (click)="goBack()">Back to Orders</button>
+  </div>
+
+  <!-- Success State for Cancellation -->
+  <div *ngIf="cancelSuccess" class="alert alert-success">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+    </svg>
+    Order cancelled successfully! Redirecting to orders list...
+  </div>
+
+  <!-- Order Details -->
+  <div *ngIf="order && !isLoading" class="order-content">
+    <!-- Header -->
+    <div class="order-header">
+      <button class="back-btn" (click)="goBack()">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path
+            d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+          />
+        </svg>
+        Back to Orders
+      </button>
+      <h1>Order Details</h1>
+    </div>
+
+    <!-- Order Info Card -->
+    <div class="order-info-card">
+      <div class="order-info-header">
+        <div class="order-id">
+          <h2>Order #{{ order.id }}</h2>
+          <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+            {{ order.status }}
+          </span>
+        </div>
+        <div class="order-date">
+          <p>{{ formatDate(order.orderDate) }}</p>
+        </div>
+      </div>
+
+      <div class="order-info-grid">
+        <div class="info-item">
+          <label>Customer ID</label>
+          <p>{{ order.customerId }}</p>
+        </div>
+        <div class="info-item">
+          <label>Total Amount</label>
+          <p class="total-amount">${{ order.totalAmount.toFixed(2) }}</p>
+        </div>
+        <div class="info-item">
+          <label>Number of Items</label>
+          <p>{{ order.items.length }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="order-items-section">
+      <h3>Order Items</h3>
+      <div class="items-list">
+        <div class="item-card" *ngFor="let item of order.items">
+          <div class="item-image">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path
+                d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+              />
+            </svg>
+          </div>
+          <div class="item-details">
+            <h4>Product ID: {{ item.productId }}</h4>
+            <div class="item-meta">
+              <span class="item-quantity">Quantity: {{ item.quantity }}</span>
+              <span class="item-price"
+                >Unit Price: ${{ item.price.toFixed(2) }}</span
+              >
+            </div>
+          </div>
+          <div class="item-total">
+            <p class="subtotal-label">Subtotal</p>
+            <p class="subtotal-amount">
+              ${{ (item.price * item.quantity).toFixed(2) }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="order-summary">
+      <h3>Order Summary</h3>
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span>${{ order.totalAmount.toFixed(2) }}</span>
+      </div>
+      <div class="summary-row">
+        <span>Shipping</span>
+        <span>$0.00</span>
+      </div>
+      <div class="summary-row summary-total">
+        <span>Total</span>
+        <span>${{ order.totalAmount.toFixed(2) }}</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="order-actions">
+      <button
+        *ngIf="canRequestRefund()"
+        class="btn btn-secondary"
+        [routerLink]="['/refunds/create', order.id]"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path
+            d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"
+          />
+        </svg>
+        Request Refund
+      </button>
+      <button
+        *ngIf="canCancelOrder()"
+        class="btn btn-danger"
+        (click)="cancelOrder()"
+        [disabled]="isCancelling"
+      >
+        <span *ngIf="!isCancelling">Cancel Order</span>
+        <span *ngIf="isCancelling">
+          <span class="spinner-small"></span>
+          Cancelling...
+        </span>
+      </button>
+    </div>
+
+    <!-- Cancelled Order Notice -->
+    <div
+      *ngIf="order.status.toUpperCase() === 'CANCELLED'"
+      class="alert alert-info"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+      >
+        <path
+          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+        />
+      </svg>
+      This order has been cancelled and cannot be modified.
+    </div>
+  </div>
+</div>

@@ -128,6 +128,10 @@ export class SellerDashboardComponent implements OnInit {
     this.router.navigate(['/seller/orders']);
   }
 
+  navigateToReviews() {
+    this.router.navigate(['/seller/reviews']);
+  }
+
   viewProduct(productId: string) {
     this.router.navigate(['/seller/products', productId]);
   }
