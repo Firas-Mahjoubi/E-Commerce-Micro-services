@@ -4,11 +4,11 @@ import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
-import { 
-  User, 
-  LoginRequest, 
-  RegisterRequest, 
-  AuthResponse 
+import {
+  User,
+  LoginRequest,
+  RegisterRequest,
+  AuthResponse
 } from '@core/models/user.model';
 import { environment } from '../../../environments/environment';
 
@@ -20,7 +20,7 @@ export class AuthService {
   private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
   private isBrowser = isPlatformBrowser(this.platformId);
-  
+
   // Use API Gateway URL from environment
   private readonly API_URL = environment.apiUrl;
   private readonly TOKEN_KEY = 'access_token';
@@ -73,7 +73,7 @@ export class AuthService {
    */
   logout(): Observable<any> {
     const refreshToken = this.getRefreshToken();
-    
+
     return this.http.post(`${this.API_URL}/auth/logout`, { refresh_token: refreshToken })
       .pipe(
         tap(() => this.clearAuthData()),
@@ -90,7 +90,7 @@ export class AuthService {
    */
   refreshToken(): Observable<AuthResponse> {
     const refreshToken = this.getRefreshToken();
-    
+
     if (!refreshToken) {
       return throwError(() => new Error('No refresh token available'));
     }
@@ -191,7 +191,7 @@ export class AuthService {
   redirectByRole(): void {
     const role = this.getUserRole();
     console.log('[AuthService] Redirecting by role:', role);
-    
+
     if (role === 'seller' || this.hasRole('seller')) {
       this.router.navigate(['/seller/dashboard']);
     } else if (role === 'admin' || this.hasRole('admin')) {
@@ -229,7 +229,7 @@ export class AuthService {
    */
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'An error occurred';
-    
+
     if (error.error instanceof ErrorEvent) {
       // Client-side error
       errorMessage = error.error.message;
@@ -237,7 +237,7 @@ export class AuthService {
       // Server-side error
       errorMessage = error.error?.message || error.message || 'Server error occurred';
     }
-    
+
     return throwError(() => new Error(errorMessage));
   }
 }

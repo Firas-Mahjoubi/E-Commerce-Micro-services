@@ -1,0 +1,142 @@
+<div class="product-reviews-container">
+  <!-- Header avec bouton retour -->
+  <div class="page-header">
+    <button class="btn-back" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i> Retour au produit
+    </button>
+    <h1>Avis clients</h1>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Chargement des avis...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-message">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ error }}
+  </div>
+
+  <!-- Reviews Content -->
+  <div *ngIf="!loading && !error" class="reviews-content">
+    <!-- Statistics Section -->
+    <div class="reviews-header" *ngIf="statistics">
+      <div class="rating-summary">
+        <div class="average-rating">
+          <h2>{{ statistics.averageRating.toFixed(1) }}</h2>
+          <div class="stars">
+            <i *ngFor="let star of getRatingArray(Math.round(statistics.averageRating))" class="fas fa-star"></i>
+            <i *ngFor="let star of getEmptyStars(Math.round(statistics.averageRating))" class="far fa-star"></i>
+          </div>
+          <p>{{ statistics.totalReviews }} avis</p>
+          <p class="verified-count">{{ statistics.verifiedReviewsCount }} achat(s) vérifié(s)</p>
+        </div>
+
+        <div class="rating-distribution">
+          <div *ngFor="let dist of getRatingDistributionArray()" class="rating-bar">
+            <span class="rating-label">{{ dist.rating }} <i class="fas fa-star"></i></span>
+            <div class="bar-container">
+              <div class="bar-fill" [style.width.%]="dist.percentage"></div>
+            </div>
+            <span class="rating-count">{{ dist.count }}</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary write-review-btn" (click)="writeReview()">
+        <i class="fas fa-edit"></i> Écrire un avis
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Filtrer par note :</label>
+        <button
+          [class.active]="selectedRating === null"
+          (click)="filterByRating(null)"
+          class="filter-btn">
+          Tous
+        </button>
+        <button
+          *ngFor="let rating of [5, 4, 3, 2, 1]"
+          [class.active]="selectedRating === rating"
+          (click)="filterByRating(rating)"
+          class="filter-btn">
+          {{ rating }} <i class="fas fa-star"></i>
+        </button>
+      </div>
+
+      <div class="filter-group">
+        <label>
+          <input type="checkbox" [checked]="showVerifiedOnly" (change)="toggleVerifiedOnly()">
+          Achats vérifiés uniquement
+        </label>
+      </div>
+
+      <div class="filter-group">
+        <label>Trier par :</label>
+        <select [(ngModel)]="sortBy" (change)="changeSortBy(sortBy)" class="sort-select">
+          <option value="newest">Plus récents</option>
+          <option value="highest">Note décroissante</option>
+          <option value="lowest">Note croissante</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Reviews List -->
+    <div class="reviews-list">
+      <div *ngIf="filteredReviews.length === 0" class="no-reviews">
+        <i class="fas fa-comment-slash"></i>
+        <p>Aucun avis pour le moment</p>
+      </div>
+
+      <div *ngFor="let review of filteredReviews" class="review-card">
+        <div class="review-header">
+          <div class="user-info">
+            <div class="avatar">{{ (review.userName || review.userEmail || 'A').charAt(0) }}</div>
+            <div>
+              <h4>{{ review.userName || 'Utilisateur' }}</h4>
+              <p class="user-email" *ngIf="review.userEmail">{{ review.userEmail }}</p>
+              <div class="stars">
+                <i *ngFor="let star of getRatingArray(review.rating)" class="fas fa-star"></i>
+                <i *ngFor="let star of getEmptyStars(review.rating)" class="far fa-star"></i>
+              </div>
+            </div>
+          </div>
+          <div class="review-meta">
+            <span class="verified-badge" *ngIf="review.verified">
+              <i class="fas fa-check-circle"></i> Achat vérifié
+            </span>
+            <span class="review-date">{{ review.createdAt | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
+
+        <div class="review-content">
+          <h3>{{ review.title }}</h3>
+          <p>{{ review.comment }}</p>
+        </div>
+
+        <!-- Action supprimer pour l'utilisateur propriétaire de l'avis -->
+        <div class="review-actions" *ngIf="isMyReview(review)">
+          <button class="btn-delete" (click)="deleteReview(review)" title="Supprimer">
+            <i class="fas fa-trash"></i> Supprimer mon avis
+          </button>
+        </div>
+
+        <div class="review-footer" *ngIf="review.product">
+          <div class="product-info">
+            <img
+              *ngIf="review.product.imageUrls && review.product.imageUrls.length > 0"
+              [src]="review.product.imageUrls[0]"
+              [alt]="review.product.name"
+              class="product-thumbnail">
+            <span class="product-name">{{ review.product.name }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

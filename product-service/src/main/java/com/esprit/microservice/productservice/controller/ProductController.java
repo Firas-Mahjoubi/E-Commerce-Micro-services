@@ -25,9 +25,7 @@ public class ProductController {
     // CREATE - Create a new product
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<ProductResponse> createProduct(
-            @RequestBody ProductRequest productRequest,
-            HttpServletRequest request) {  // ✅ ADD HttpServletRequest parameter
+    public ResponseEntity<ProductResponse> createProduct(@RequestBody ProductRequest productRequest, HttpServletRequest request) {  // ✅ ADD HttpServletRequest parameter
 
         try {
             // ✅ Extract seller ID from JWT token

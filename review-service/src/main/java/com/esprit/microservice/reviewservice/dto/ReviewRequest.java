@@ -16,6 +16,10 @@ public class ReviewRequest {
     private String productId;
 
     private String userId;
+    
+    private String userName;  // Nom de l'utilisateur depuis le token
+    
+    private String userEmail; // Email de l'utilisateur depuis le token
 
     @Min(value = 1, message = "Rating must be at least 1")
     @Max(value = 5, message = "Rating must be at most 5")
@@ -29,5 +33,6 @@ public class ReviewRequest {
     @Size(max = 1000, message = "Comment must be less than 1000 characters")
     private String comment;
 
+    @Builder.Default
     private Boolean verified = false;
 }

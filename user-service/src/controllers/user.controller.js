@@ -147,6 +147,35 @@ exports.deleteCurrentUser = async (req, res, next) => {
   }
 };
 
+// Get user basic info for notifications (authenticated users can access)
+exports.getUserBasicInfo = async (req, res, next) => {
+  try {
+    const userId = req.params.userId;
+
+    const user = await db.User.findOne({
+      where: { keycloak_id: userId },
+      attributes: ['keycloak_id', 'username', 'email', 'first_name', 'last_name']
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      id: user.keycloak_id,
+      username: user.username,
+      email: user.email,
+      firstName: user.first_name,
+      lastName: user.last_name
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Get all users (admin only)
 exports.getAllUsers = async (req, res, next) => {
   try {
@@ -496,6 +525,55 @@ exports.removeRole = async (req, res, next) => {
     });
   } catch (error) {
     logger.error('Remove role error:', error.response?.data || error.message);
+    next(error);
+  }
+};
+
+// Get all customers with role 'customer' (for sending notifications)
+exports.getAllCustomers = async (req, res, next) => {
+  try {
+    // Get admin token for Keycloak
+    const adminToken = await getAdminToken();
+    keycloakAdminClient.defaults.headers.common['Authorization'] = `Bearer ${adminToken}`;
+
+    // Fetch all users from Keycloak
+    const keycloakUsersResponse = await keycloakAdminClient.get('/users');
+    const keycloakUsers = keycloakUsersResponse.data;
+
+    const customers = [];
+
+    // For each user, check if they have the 'customer' role
+    for (const keycloakUser of keycloakUsers) {
+      try {
+        const rolesResponse = await keycloakAdminClient.get(
+          `/users/${keycloakUser.id}/role-mappings/realm`
+        );
+        const roles = rolesResponse.data.map(role => role.name);
+
+        // If user has 'customer' role, add to list
+        if (roles.includes('customer')) {
+          customers.push({
+            id: keycloakUser.id,
+            username: keycloakUser.username,
+            email: keycloakUser.email,
+            firstName: keycloakUser.firstName,
+            lastName: keycloakUser.lastName,
+            emailVerified: keycloakUser.emailVerified
+          });
+        }
+      } catch (roleError) {
+        logger.warn(`Failed to fetch roles for user ${keycloakUser.id}:`, roleError.message);
+      }
+    }
+
+    logger.info(`Found ${customers.length} customers`);
+
+    res.json({
+      count: customers.length,
+      customers: customers
+    });
+  } catch (error) {
+    logger.error('Get all customers error:', error.response?.data || error.message);
     next(error);
   }
 };

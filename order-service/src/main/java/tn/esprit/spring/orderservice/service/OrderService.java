@@ -64,7 +64,7 @@ public class OrderService {
      * Récupérer toutes les commandes d'un client
      */
     @Transactional(readOnly = true)
-    public List<OrderResponse> getOrdersByCustomerId(Long customerId) {
+    public List<OrderResponse> getOrdersByCustomerId(String customerId) {
         log.info("Fetching orders for customer: {}", customerId);
         
         List<Order> orders = orderRepository.findByCustomerId(customerId);
@@ -90,7 +90,7 @@ public class OrderService {
      * Récupérer une commande par ID et customer ID (sécurisé)
      */
     @Transactional(readOnly = true)
-    public OrderResponse getOrderByIdAndCustomerId(Long orderId, Long customerId) {
+    public OrderResponse getOrderByIdAndCustomerId(Long orderId, String customerId) {
         log.info("Fetching order with ID: {} for customer: {}", orderId, customerId);
         
         Order order = orderRepository.findByIdAndCustomerId(orderId, customerId)
@@ -118,7 +118,7 @@ public class OrderService {
     /**
      * Annuler une commande
      */
-    public OrderResponse cancelOrder(Long orderId, Long customerId) {
+    public OrderResponse cancelOrder(Long orderId, String customerId) {
         log.info("Cancelling order: {} for customer: {}", orderId, customerId);
         
         Order order = orderRepository.findByIdAndCustomerId(orderId, customerId)

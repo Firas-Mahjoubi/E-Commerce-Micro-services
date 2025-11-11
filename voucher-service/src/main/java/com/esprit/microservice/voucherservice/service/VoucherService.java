@@ -1,5 +1,8 @@
 package com.esprit.microservice.voucherservice.service;
 
+import com.esprit.microservice.voucherservice.client.UserClient;
+import com.esprit.microservice.voucherservice.dto.CustomersResponse;
+import com.esprit.microservice.voucherservice.dto.VoucherStatsDto;
 import com.esprit.microservice.voucherservice.entity.Voucher;
 import com.esprit.microservice.voucherservice.repository.VoucherRepo;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +20,8 @@ import java.util.Optional;
 public class VoucherService {
 
     private final VoucherRepo voucherRepo;
+    private final UserClient userClient;
+    private final EmailService emailService;
 
     @Transactional
     public Voucher createVoucher(Voucher voucher) {
@@ -25,6 +30,23 @@ public class VoucherService {
         voucher.setActive(true);
         Voucher savedVoucher = voucherRepo.save(voucher);
         log.info("Voucher created successfully with code: {}", savedVoucher.getCode());
+
+        // Send email notifications to all customers asynchronously
+        try {
+            log.info("Fetching customers to send voucher notifications");
+            CustomersResponse customersResponse = userClient.getAllCustomers();
+            log.info("Found {} customers to notify", customersResponse.getCount());
+
+            if (customersResponse.getCustomers() != null && !customersResponse.getCustomers().isEmpty()) {
+                emailService.sendVoucherNotificationToCustomers(customersResponse.getCustomers(), savedVoucher);
+            } else {
+                log.warn("No customers found to send voucher notification");
+            }
+        } catch (Exception e) {
+            log.error("Failed to send voucher notification emails: {}", e.getMessage(), e);
+            // Don't fail voucher creation if email sending fails
+        }
+
         return savedVoucher;
     }
 
@@ -84,5 +106,38 @@ public class VoucherService {
     public List<Voucher> getVouchersByCategory(String category) {
         log.info("Fetching vouchers by category: {}", category);
         return voucherRepo.findByApplicableCategory(category);
+    }
+
+    public VoucherStatsDto getVoucherStatistics() {
+        log.info("Calculating voucher statistics");
+        List<Voucher> allVouchers = voucherRepo.findAll();
+        LocalDateTime now = LocalDateTime.now();
+
+        long totalVouchers = allVouchers.size();
+        long activeVouchers = allVouchers.stream()
+                .filter(v -> v.getActive() &&
+                        v.getEndDate().isAfter(now) &&
+                        v.getStartDate().isBefore(now))
+                .count();
+
+        long inactiveVouchers = allVouchers.stream()
+                .filter(v -> !v.getActive())
+                .count();
+
+        long expiredVouchers = allVouchers.stream()
+                .filter(v -> v.getEndDate().isBefore(now))
+                .count();
+
+        long scheduledVouchers = allVouchers.stream()
+                .filter(v -> v.getStartDate().isAfter(now))
+                .count();
+
+        return VoucherStatsDto.builder()
+                .totalVouchers(totalVouchers)
+                .activeVouchers(activeVouchers)
+                .inactiveVouchers(inactiveVouchers)
+                .expiredVouchers(expiredVouchers)
+                .scheduledVouchers(scheduledVouchers)
+                .build();
     }
 }

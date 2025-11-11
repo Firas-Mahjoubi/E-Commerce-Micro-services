@@ -116,4 +116,16 @@ export class ProductDetailComponent implements OnInit {
   goBack(): void {
     this.router.navigate(['/products']);
   }
+
+  viewReviews(): void {
+    if (this.product) {
+      this.router.navigate(['/reviews/product', this.product.id]);
+    }
+  }
+
+  writeReview(): void {
+    if (this.product) {
+      this.router.navigate(['/reviews/create', this.product.id]);
+    }
+  }
 }
