@@ -149,11 +149,6 @@
   <div class="reviews-section">
     <h2>Tous les avis ({{ filteredReviews.length }})</h2>
 
-    <!-- DEBUG INFO -->
-    <div style="background: #fff3cd; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 13px;">
-      <strong>Debug:</strong> Total reviews: {{ reviews.length }} | Filtered: {{ filteredReviews.length }}
-    </div>
-
     <div *ngIf="filteredReviews.length === 0 && !loading" class="no-reviews">
       <i class="fas fa-comment-slash"></i>
       <p *ngIf="!selectedRating && !showVerifiedOnly && !searchTerm">Aucun avis pour le moment</p>
@@ -162,17 +157,7 @@
     </div>
 
     <div class="reviews-list">
-      <div *ngFor="let review of filteredReviews; let i = index" class="review-card">
-
-        <!-- TEST SIMPLE -->
-        <div style="padding: 10px; background: #f0f0f0; margin-bottom: 10px; color: #000 !important; font-size: 16px !important;">
-          <strong style="color: red !important;">Review #{{i+1}}:</strong>
-          <span style="color: blue !important;">{{review.userName}}</span> -
-          <span style="color: green !important;">{{review.rating}}★</span> -
-          <span style="color: purple !important;">{{review.title}}</span>
-        </div>
-
-        <!-- Product Section -->
+      <div *ngFor="let review of filteredReviews; let i = index" class="review-card">        <!-- Product Section -->
         <div class="product-section" *ngIf="review.product">
           <div class="product-label">
             <i class="fas fa-box"></i> Produit évalué

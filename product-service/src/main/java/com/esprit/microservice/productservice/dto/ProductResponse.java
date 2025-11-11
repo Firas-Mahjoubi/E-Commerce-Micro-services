@@ -28,5 +28,4 @@ public class ProductResponse {
     private String sellerId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
 }

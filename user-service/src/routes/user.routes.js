@@ -2,11 +2,18 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/user.controller');
 const { requireRole } = require('../middleware/jwt.middleware');
+const { verifyInternalRequest } = require('../middleware/internal.middleware');
 
 // User routes (authenticated users)
 router.get('/me', userController.getCurrentUser);
 router.put('/me', userController.updateCurrentUser);
 router.delete('/me', userController.deleteCurrentUser);
+
+// Get user basic info for notifications (authenticated users can access)
+router.get('/:userId/basic', userController.getUserBasicInfo);
+
+// Internal service routes (require internal API key)
+router.get('/customers/all', verifyInternalRequest, userController.getAllCustomers);
 
 // Admin routes (require admin role)
 router.get('/', requireRole('admin'), userController.getAllUsers);

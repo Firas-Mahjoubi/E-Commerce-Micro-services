@@ -1,0 +1,76 @@
+<!-- Place as add-voucher.component.html in the same component folder.
+     Uses classes similar to typical login/register styles: auth-container, auth-card, form-group, btn-primary -->
+<div class="auth-container">
+  <div class="auth-card">
+    <h2 class="auth-title">Add Voucher</h2>
+
+    <form [formGroup]="voucherForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="form-group">
+        <label for="code">Code</label>
+        <input id="code" type="text" formControlName="code" class="form-control" placeholder="e.g. SAVE10" />
+        <div class="form-error" *ngIf="code?.touched && code?.invalid">
+          <small *ngIf="code?.errors?.['required']">Code is required.</small>
+          <small *ngIf="code?.errors?.['maxlength']">Code is too long.</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" formControlName="description" class="form-control" rows="2" placeholder="Short description"></textarea>
+        <div class="form-error" *ngIf="description?.touched && description?.invalid">
+          <small *ngIf="description?.errors?.['required']">Description is required.</small>
+          <small *ngIf="description?.errors?.['minlength']">Description is too short.</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col">
+          <label for="discountPercentage">Discount (%)</label>
+          <input id="discountPercentage" type="number" formControlName="discountPercentage" class="form-control" min="0" max="100" />
+          <div class="form-error" *ngIf="discountPercentage?.touched && discountPercentage?.invalid">
+            <small *ngIf="discountPercentage?.errors?.['required']">Discount is required.</small>
+            <small *ngIf="discountPercentage?.errors?.['min']">Must be ≥ 0.</small>
+            <small *ngIf="discountPercentage?.errors?.['max']">Must be ≤ 100.</small>
+          </div>
+        </div>
+
+        <div class="form-group col">
+          <label for="applicableCategory">Applicable Category</label>
+          <input id="applicableCategory" type="text" formControlName="applicableCategory" class="form-control" placeholder="Optional" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col">
+          <label for="startDate">Start Date</label>
+          <input id="startDate" type="datetime-local" formControlName="startDate" class="form-control" />
+          <div class="form-error" *ngIf="startDate?.touched && startDate?.invalid">
+            <small *ngIf="startDate?.errors?.['required']">Start date is required.</small>
+          </div>
+        </div>
+
+        <div class="form-group col">
+          <label for="endDate">End Date</label>
+          <input id="endDate" type="datetime-local" formControlName="endDate" class="form-control" />
+          <div class="form-error" *ngIf="endDate?.touched && endDate?.invalid">
+            <small *ngIf="endDate?.errors?.['required']">End date is required.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group inline">
+        <label>
+          <input type="checkbox" formControlName="active" /> Active
+        </label>
+      </div>
+
+      <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+      <div *ngIf="successMessage" class="alert" style="background:#ecfdf5;color:#064e3b;border:1px solid #bbf7d0;">{{ successMessage }}</div>
+
+      <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+        {{ isSaving ? 'Saving...' : 'Add Voucher' }}
+      </button>
+      <button type="button" class="btn" (click)="router.navigate(['/vouchers'])" style="margin-left:8px;">Cancel</button>
+    </form>
+  </div>
+</div>

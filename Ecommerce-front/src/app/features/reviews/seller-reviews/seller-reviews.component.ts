@@ -67,7 +67,6 @@ export class SellerReviewsComponent implements OnInit {
 
     this.reviewService.getSellerProductReviews(this.sellerId, this.currentPage, this.pageSize).subscribe({
       next: (data) => {
-        console.log('Reviews data received:', data);
         if (append) {
           this.reviews = [...this.reviews, ...data];
         } else {
@@ -76,7 +75,6 @@ export class SellerReviewsComponent implements OnInit {
         this.hasMore = data.length === this.pageSize;
         this.loading = false;
         this.applyFilters();
-        console.log('Filtered reviews:', this.filteredReviews);
       },
       error: (err) => {
         this.error = 'Erreur lors du chargement des avis';

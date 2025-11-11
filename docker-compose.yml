@@ -1,10 +1,80 @@
-version: '3.8'
-
 services:
   # -------------------------------
-  # Keycloak + PostgreSQL
+  # PostgreSQL (for Keycloak)
   # -------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
 
+  # -------------------------------
+  # Keycloak
+  # -------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2.5
+    container_name: keycloak
+    command: 
+      - start-dev
+      - --hostname=localhost
+      - --hostname-strict=false
+    ports:
+      - "8080:8080"
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: password
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - ./realm-export.json:/opt/keycloak/data/import/realm-export.json
+    depends_on:
+      - postgres
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  # -------------------------------
+  # Eureka Server (Service Discovery)
+  # -------------------------------
+  eureka-server:
+    build: ./eureka-server
+    image: firasmahjoubi/eureka-server:latest
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  # -------------------------------
+  # Config Server
+  # -------------------------------
+  configserver:
+    build: ./config-server
+    image: firasmahjoubi/configserver:latest
+    container_name: configserver
+    ports:
+      - "8888:8888"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+    depends_on:
+      - eureka-server
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
   # -------------------------------
   # Zipkin (Distributed Tracing)
   # -------------------------------
@@ -16,6 +86,39 @@ services:
     environment:
       STORAGE_TYPE: mem
     restart: unless-stopped
+    networks:
+      - ecommerce-net
+
+  # -------------------------------
+  # MongoDB (for Product Service)
+  # -------------------------------
+  mongo:
+    image: mongo:7.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: product-service
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  # -------------------------------
+  # MySQL (for All Services)
+  # -------------------------------
+  mysqldb:
+    image: mysql:5.6
+    container_name: db
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=inventory-service
+    volumes:
+      - mysql_data:/var/lib/mysql
     networks:
       - ecommerce-net
 
@@ -73,19 +176,117 @@ services:
       - ecommerce-net
 
   # -------------------------------
-  # MySQL
+  # API Gateway
   # -------------------------------
+  api-gateway:
+    build: ./api-gateway
+    image: firasmahjoubi/api-gateway:latest
+    container_name: api-gateway
+    ports:
+      - "8090:8090"
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://configserver:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+    depends_on:
+      - configserver
+      - eureka-server
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
 
   # -------------------------------
-  # MongoDB
+  # User Service (Node.js)
   # -------------------------------
+  user-service:
+    build: ./user-service
+    image: firasmahjoubi/user-service:latest
+    container_name: user-service
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=Ecommerce
+      - KEYCLOAK_CLIENT_ID=ecommerce-user-service
+      - KEYCLOAK_CLIENT_SECRET=IMeasxTDPUFF8F1GSlx0sW4t6bIoUoh5
+      - KEYCLOAK_ADMIN_USERNAME=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=keycloak
+      - DB_USER=keycloak
+      - DB_PASSWORD=password
+      - EUREKA_URL=http://eureka-server:8761/eureka
+    depends_on:
+      - postgres
+      - keycloak
+      - eureka-server
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
 
-# -------------------------------
-# Networks & Volumes
-# -------------------------------
+  # -------------------------------
+  # Product Service
+  # -------------------------------
+  product-service:
+    build: ./product-service
+    image: firasmahjoubi/product-service:latest
+    container_name: product-service
+    ports:
+      - "8092:8092"
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://configserver:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - KAFKA_BOOTSTRAP_SERVERS=broker:29092
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/product-service
+      - SPRING_MAIL_HOST=smtp.gmail.com
+      - SPRING_MAIL_PORT=587
+      - SPRING_MAIL_USERNAME=${MAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${MAIL_PASSWORD}
+    depends_on:
+      - configserver
+      - eureka-server
+      - broker
+      - mongo
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  # -------------------------------
+  # Inventory Service
+  # -------------------------------
+  inventory-service:
+    build: ./inventory-service
+    image: firasmahjoubi/inventory-service:latest
+    container_name: inventory-service
+    ports:
+      - "8091:8091"
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://configserver:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/inventory-service?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - KAFKA_BOOTSTRAP_SERVERS=broker:29092
+    depends_on:
+      - configserver
+      - eureka-server
+      - mysqldb
+      - broker
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
 networks:
   ecommerce-net:
     driver: bridge
+
 volumes:
   postgres_data:
+    driver: local
+  mongo_data:
+    driver: local
+  mysql_data:
+    driver: local
 

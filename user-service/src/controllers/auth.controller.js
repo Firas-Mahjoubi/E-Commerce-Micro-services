@@ -42,7 +42,11 @@ exports.register = async (req, res, next) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { username, email, password, firstName, lastName, phone } = req.body;
+    const { username, email, password, firstName, lastName, phone, role = 'customer' } = req.body;
+
+    // Validate role
+    const validRoles = ['customer', 'seller', 'admin'];
+    const userRole = validRoles.includes(role) ? role : 'customer';
 
     // Get admin token
     const adminToken = await getAdminToken();
@@ -61,7 +65,7 @@ exports.register = async (req, res, next) => {
         value: password,
         temporary: false
       }],
-      realmRoles: ['customer'] // Default role
+      realmRoles: [userRole] // Use the role from request
     };
 
     const createResponse = await keycloakAdminClient.post('/users', keycloakUser);
@@ -70,17 +74,18 @@ exports.register = async (req, res, next) => {
     const locationHeader = createResponse.headers.location;
     const keycloakId = locationHeader.substring(locationHeader.lastIndexOf('/') + 1);
 
-    // Assign customer role
+    // Assign the specified role
     try {
-      const rolesResponse = await keycloakAdminClient.get('/roles/customer');
-      const customerRole = rolesResponse.data;
+      const rolesResponse = await keycloakAdminClient.get(`/roles/${userRole}`);
+      const roleData = rolesResponse.data;
       
       await keycloakAdminClient.post(
         `/users/${keycloakId}/role-mappings/realm`,
-        [customerRole]
+        [roleData]
       );
+      logger.info(`Assigned ${userRole} role to user ${username}`);
     } catch (roleError) {
-      logger.warn('Failed to assign customer role:', roleError.message);
+      logger.warn(`Failed to assign ${userRole} role:`, roleError.message);
     }
 
     // Create user in local database

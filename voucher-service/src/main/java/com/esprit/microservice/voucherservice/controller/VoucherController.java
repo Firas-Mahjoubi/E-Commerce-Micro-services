@@ -17,7 +17,7 @@ public class VoucherController {
     private final VoucherService voucherService;
 
     @PostMapping
-    public ResponseEntity<Voucher> createVoucher( @RequestBody Voucher voucher) {
+    public ResponseEntity<Voucher> createVoucher(@RequestBody Voucher voucher) {
         Voucher createdVoucher = voucherService.createVoucher(voucher);
         return new ResponseEntity<>(createdVoucher, HttpStatus.CREATED);
     }
@@ -50,7 +50,7 @@ public class VoucherController {
     @PutMapping("/{code}")
     public ResponseEntity<Voucher> updateVoucher(
             @PathVariable String code,
-             @RequestBody Voucher voucherDetails) {
+            @RequestBody Voucher voucherDetails) {
         try {
             Voucher updatedVoucher = voucherService.updateVoucher(code, voucherDetails);
             return ResponseEntity.ok(updatedVoucher);

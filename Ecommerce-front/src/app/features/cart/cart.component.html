@@ -37,15 +37,15 @@
 
         <div class="item-actions">
           <div class="quantity-controls">
-            <button 
-              (click)="decreaseQuantity(item)" 
+            <button
+              (click)="decreaseQuantity(item)"
               [disabled]="item.quantity <= 1"
               class="btn-quantity">
               -
             </button>
             <span class="quantity">{{ item.quantity }}</span>
-            <button 
-              (click)="increaseQuantity(item)" 
+            <button
+              (click)="increaseQuantity(item)"
               [disabled]="item.quantity >= item.product.stockQuantity"
               class="btn-quantity">
               +
@@ -74,9 +74,52 @@
       <div class="summary-card">
         <h2>Order Summary</h2>
 
+        <!-- Voucher Section -->
+        <div class="voucher-section">
+          <h3>Have a Voucher?</h3>
+          <div class="voucher-input-group" *ngIf="!cart.appliedVoucher">
+            <input
+              type="text"
+              [(ngModel)]="voucherCode"
+              placeholder="Enter voucher code"
+              class="voucher-input"
+              (keyup.enter)="applyVoucher()">
+            <button
+              (click)="applyVoucher()"
+              [disabled]="isApplyingVoucher"
+              class="btn-apply-voucher">
+              {{ isApplyingVoucher ? 'Applying...' : 'Apply' }}
+            </button>
+          </div>
+
+          <div class="applied-voucher" *ngIf="cart.appliedVoucher">
+            <div class="voucher-badge">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span>{{ cart.appliedVoucher.code }}</span>
+              <span class="voucher-discount">-{{ cart.appliedVoucher.discountPercentage }}%</span>
+            </div>
+            <button (click)="removeVoucher()" class="btn-remove-voucher">Remove</button>
+          </div>
+
+          <p class="voucher-message" *ngIf="voucherMessage"
+             [class.success]="cart.appliedVoucher"
+             [class.error]="!cart.appliedVoucher">
+            {{ voucherMessage }}
+          </p>
+        </div>
+
+        <div class="summary-divider"></div>
+
         <div class="summary-row">
-          <span>Items ({{ cart.totalItems }})</span>
+          <span>Subtotal ({{ cart.totalItems }} items)</span>
           <span>${{ cart.totalPrice.toFixed(2) }}</span>
+        </div>
+
+        <div class="summary-row discount" *ngIf="cart.appliedVoucher && cart.discountAmount">
+          <span>Discount ({{ cart.appliedVoucher.discountPercentage }}%)</span>
+          <span class="discount-amount">-${{ cart.discountAmount.toFixed(2) }}</span>
         </div>
 
         <div class="summary-row">
@@ -93,7 +136,7 @@
 
         <div class="summary-total">
           <span>Total</span>
-          <span>${{ cart.totalPrice.toFixed(2) }}</span>
+          <span>${{ (cart.finalPrice || cart.totalPrice).toFixed(2) }}</span>
         </div>
 
         <button (click)="proceedToCheckout()" class="btn-checkout">
