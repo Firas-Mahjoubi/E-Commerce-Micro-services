@@ -1,0 +1,290 @@
+<div class="create-refund-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading order details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="error-container">
+    <div class="alert alert-danger">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+      >
+        <path
+          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+        />
+      </svg>
+      {{ errorMessage }}
+    </div>
+    <button class="btn btn-primary" (click)="goBack()">Go Back</button>
+  </div>
+
+  <!-- Success State -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+    </svg>
+    {{ successMessage }}
+  </div>
+
+  <!-- Refund Form -->
+  <div *ngIf="order && !isLoading" class="refund-content">
+    <!-- Header -->
+    <div class="refund-header">
+      <button class="back-btn" (click)="goBack()">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path
+            d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+          />
+        </svg>
+        Back
+      </button>
+      <h1>Request Refund</h1>
+      <p class="subtitle">Order #{{ order.id }}</p>
+    </div>
+
+    <!-- Form -->
+    <form
+      [formGroup]="refundForm"
+      (ngSubmit)="submitRefund()"
+      class="refund-form"
+    >
+      <!-- General Reason -->
+      <div class="form-section">
+        <h3>Refund Reason</h3>
+        <div class="form-group">
+          <label for="reason"
+            >Please explain why you're requesting a refund *</label
+          >
+          <textarea
+            id="reason"
+            formControlName="reason"
+            rows="4"
+            placeholder="Describe your reason for the refund (minimum 10 characters)"
+            class="form-control"
+            [class.invalid]="
+              refundForm.get('reason')?.invalid &&
+              refundForm.get('reason')?.touched
+            "
+          ></textarea>
+          <div
+            class="error-message"
+            *ngIf="
+              refundForm.get('reason')?.invalid &&
+              refundForm.get('reason')?.touched
+            "
+          >
+            <span *ngIf="refundForm.get('reason')?.errors?.['required']"
+              >Reason is required</span
+            >
+            <span *ngIf="refundForm.get('reason')?.errors?.['minlength']"
+              >Reason must be at least 10 characters</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Items Selection -->
+      <div class="form-section">
+        <h3>Select Items to Refund</h3>
+        <p class="info-text">
+          Choose which items you want to refund and specify the quantity for
+          each.
+        </p>
+
+        <div formArrayName="items" class="items-list">
+          <div
+            *ngFor="let itemGroup of itemsFormArray.controls; let i = index"
+            [formGroupName]="i"
+            class="item-card"
+            [class.selected]="itemGroup.get('selected')?.value"
+          >
+            <div class="item-header">
+              <label class="checkbox-container">
+                <input
+                  type="checkbox"
+                  formControlName="selected"
+                  (change)="onItemSelectionChange(i)"
+                />
+                <span class="checkmark"></span>
+              </label>
+
+              <div class="item-image">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+                  />
+                </svg>
+              </div>
+
+              <div class="item-info">
+                <h4>{{ itemGroup.get("productName")?.value }}</h4>
+                <p class="product-id">
+                  Product ID: {{ itemGroup.get("productId")?.value }}
+                </p>
+                <p class="item-price">
+                  Price: ${{ itemGroup.get("price")?.value?.toFixed(2) }}
+                </p>
+              </div>
+            </div>
+
+            <div *ngIf="itemGroup.get('selected')?.value" class="item-details">
+              <!-- Quantity Selection -->
+              <div class="form-group">
+                <label [for]="'quantity-' + i">Refund Quantity *</label>
+                <div class="quantity-input">
+                  <input
+                    [id]="'quantity-' + i"
+                    type="number"
+                    formControlName="refundQuantity"
+                    [max]="itemGroup.get('maxQuantity')?.value"
+                    min="1"
+                    class="form-control"
+                    [class.invalid]="
+                      itemGroup.get('refundQuantity')?.invalid &&
+                      itemGroup.get('refundQuantity')?.touched
+                    "
+                  />
+                  <span class="max-qty"
+                    >/ {{ itemGroup.get("maxQuantity")?.value }}</span
+                  >
+                </div>
+                <div
+                  class="error-message"
+                  *ngIf="
+                    itemGroup.get('refundQuantity')?.invalid &&
+                    itemGroup.get('refundQuantity')?.touched
+                  "
+                >
+                  <span
+                    *ngIf="itemGroup.get('refundQuantity')?.errors?.['required']"
+                    >Quantity is required</span
+                  >
+                  <span *ngIf="itemGroup.get('refundQuantity')?.errors?.['min']"
+                    >Quantity must be at least 1</span
+                  >
+                  <span *ngIf="itemGroup.get('refundQuantity')?.errors?.['max']"
+                    >Quantity cannot exceed
+                    {{ itemGroup.get("maxQuantity")?.value }}</span
+                  >
+                </div>
+              </div>
+
+              <!-- Item Reason -->
+              <div class="form-group">
+                <label [for]="'itemReason-' + i">Reason for this item *</label>
+                <input
+                  [id]="'itemReason-' + i"
+                  type="text"
+                  formControlName="itemReason"
+                  placeholder="Why are you refunding this item?"
+                  class="form-control"
+                  [class.invalid]="
+                    itemGroup.get('itemReason')?.invalid &&
+                    itemGroup.get('itemReason')?.touched
+                  "
+                />
+                <div
+                  class="error-message"
+                  *ngIf="
+                    itemGroup.get('itemReason')?.invalid &&
+                    itemGroup.get('itemReason')?.touched
+                  "
+                >
+                  <span
+                    *ngIf="itemGroup.get('itemReason')?.errors?.['required']"
+                    >Item reason is required</span
+                  >
+                  <span
+                    *ngIf="itemGroup.get('itemReason')?.errors?.['minlength']"
+                    >Reason must be at least 5 characters</span
+                  >
+                </div>
+              </div>
+
+              <!-- Item Subtotal -->
+              <div class="item-subtotal">
+                <strong>Refund Amount:</strong>
+                <span class="amount">
+                  ${{
+                    (
+                      itemGroup.get("refundQuantity")?.value *
+                      itemGroup.get("price")?.value
+                    )?.toFixed(2)
+                  }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="refund-summary">
+        <div class="summary-row">
+          <span>Items Selected:</span>
+          <span>{{ getSelectedItemsCount() }}</span>
+        </div>
+        <div class="summary-row summary-total">
+          <span>Total Refund Amount:</span>
+          <span class="amount">${{ getTotalRefundAmount().toFixed(2) }}</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="goBack()"
+          [disabled]="isSubmitting"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="!canSubmit() || isSubmitting"
+        >
+          <span *ngIf="!isSubmitting">Submit Refund Request</span>
+          <span *ngIf="isSubmitting">
+            <span class="spinner-small"></span>
+            Submitting...
+          </span>
+        </button>
+      </div>
+
+      <!-- Info Notice -->
+      <div class="info-notice">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path
+            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+          />
+        </svg>
+        <p>
+          Your refund request will be reviewed by the seller. You will be
+          notified once it's processed.
+        </p>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,195 @@
+<div class="refund-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading refund details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="error-container">
+    <div class="alert alert-danger">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+      >
+        <path
+          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+        />
+      </svg>
+      {{ errorMessage }}
+    </div>
+    <button class="btn btn-primary" (click)="goBack()">Back to Refunds</button>
+  </div>
+
+  <!-- Success State for Cancellation -->
+  <div *ngIf="cancelSuccess" class="alert alert-success">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+    </svg>
+    Refund request cancelled successfully! Redirecting...
+  </div>
+
+  <!-- Refund Details -->
+  <div *ngIf="refund && !isLoading" class="refund-content">
+    <!-- Header -->
+    <div class="refund-header">
+      <button class="back-btn" (click)="goBack()">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path
+            d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+          />
+        </svg>
+        Back to Refunds
+      </button>
+      <h1>Refund Details</h1>
+    </div>
+
+    <!-- Refund Info Card -->
+    <div class="refund-info-card">
+      <div class="refund-info-header">
+        <div class="refund-id">
+          <h2>Refund #{{ refund.refundId }}</h2>
+          <span class="status-badge" [ngClass]="getStatusClass(refund.status)">
+            {{ refund.status }}
+          </span>
+        </div>
+        <button class="btn-link-order" (click)="viewOrder()">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path
+              d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"
+            />
+          </svg>
+          View Order #{{ refund.orderId }}
+        </button>
+      </div>
+
+      <div class="refund-info-grid">
+        <div class="info-item">
+          <label>Refunded Date</label>
+          <p>{{ formatDate(refund.refundedAt) }}</p>
+        </div>
+        <div class="info-item">
+          <label>Refund Type</label>
+          <p>{{ refund.fullOrderRefund ? "Full Order" : "Partial" }}</p>
+        </div>
+        <div class="info-item">
+          <label>Refund Amount</label>
+          <p class="refund-amount">${{ refund.refundAmount.toFixed(2) }}</p>
+        </div>
+      </div>
+
+      <div class="reason-section">
+        <label>Refund Reason</label>
+        <p>{{ refund.reason }}</p>
+      </div>
+    </div>
+
+    <!-- Refund Items -->
+    <div class="refund-items-section">
+      <h3>Refunded Products</h3>
+      <div class="items-list">
+        <div class="item-card" *ngFor="let productId of refund.productIds">
+          <div class="item-image">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path
+                d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+              />
+            </svg>
+          </div>
+          <div class="item-details">
+            <h4>Product ID: {{ productId }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Refund Summary -->
+    <div class="refund-summary">
+      <h3>Refund Summary</h3>
+      <div class="summary-row">
+        <span>Products Count</span>
+        <span>{{ refund.productIds.length }}</span>
+      </div>
+      <div class="summary-row">
+        <span>Refund Type</span>
+        <span>{{
+          refund.fullOrderRefund ? "Full Order Refund" : "Partial Refund"
+        }}</span>
+      </div>
+      <div class="summary-row summary-total">
+        <span>Total Refund Amount</span>
+        <span>${{ refund.refundAmount.toFixed(2) }}</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="refund-actions" *ngIf="canCancelRefund()">
+      <button
+        class="btn btn-danger"
+        (click)="cancelRefund()"
+        [disabled]="isCancelling"
+      >
+        <span *ngIf="!isCancelling">Cancel Refund Request</span>
+        <span *ngIf="isCancelling">
+          <span class="spinner-small"></span>
+          Cancelling...
+        </span>
+      </button>
+    </div>
+
+    <!-- Status Info -->
+    <div *ngIf="refund.status === 'APPROVED'" class="alert alert-info">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+      >
+        <path
+          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+        />
+      </svg>
+      Your refund request has been approved and is being processed.
+    </div>
+
+    <div *ngIf="refund.status === 'COMPLETED'" class="alert alert-success">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+      >
+        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+      </svg>
+      Your refund has been completed successfully!
+    </div>
+
+    <div *ngIf="refund.status === 'REJECTED'" class="alert alert-danger">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+      >
+        <path
+          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+        />
+      </svg>
+      Unfortunately, your refund request has been rejected by the seller.
+    </div>
+  </div>
+</div>

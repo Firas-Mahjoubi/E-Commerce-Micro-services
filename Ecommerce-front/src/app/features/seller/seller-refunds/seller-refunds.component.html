@@ -1,0 +1,190 @@
+<div class="seller-refunds-container">
+  <div class="refunds-header">
+    <h1>Refund Requests</h1>
+    <p class="subtitle">Manage customer refund requests for your products</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading refunds...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="alert alert-danger">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path
+        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+      />
+    </svg>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Empty State -->
+  <div
+    *ngIf="!isLoading && !errorMessage && refunds.length === 0"
+    class="empty-state"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path
+        d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"
+      />
+    </svg>
+    <h2>No Refund Requests</h2>
+    <p>You don't have any refund requests yet.</p>
+  </div>
+
+  <!-- Refunds Table -->
+  <div
+    *ngIf="!isLoading && !errorMessage && refunds.length > 0"
+    class="refunds-table-container"
+  >
+    <table class="refunds-table">
+      <thead>
+        <tr>
+          <th>Refund ID</th>
+          <th>Order ID</th>
+          <th>Customer ID</th>
+          <th>Products</th>
+          <th>Amount</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let refund of refunds">
+          <td>#{{ refund.refundId }}</td>
+          <td>#{{ refund.orderId }}</td>
+          <td>{{ refund.customerId }}</td>
+          <td>{{ refund.productIds.length }} item(s)</td>
+          <td class="amount">${{ refund.refundAmount.toFixed(2) }}</td>
+          <td>{{ formatDate(refund.refundedAt) }}</td>
+          <td>
+            <span
+              class="status-badge"
+              [ngClass]="getStatusClass(refund.status)"
+            >
+              {{ refund.status }}
+            </span>
+          </td>
+          <td class="actions-cell">
+            <button
+              class="btn-view"
+              (click)="viewRefundDetails(refund.refundId)"
+              title="View Details"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path
+                  d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+                />
+              </svg>
+            </button>
+            <button
+              *ngIf="canUpdateStatus(refund.status)"
+              class="btn-update"
+              (click)="openStatusModal(refund.refundId, refund.status)"
+              title="Update Status"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path
+                  d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                />
+              </svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Status Update Modal -->
+  <div
+    *ngIf="selectedRefundId"
+    class="modal-overlay"
+    (click)="closeStatusModal()"
+  >
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Update Refund Status</h3>
+        <button class="close-btn" (click)="closeStatusModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <p>Select new status for Refund #{{ selectedRefundId }}</p>
+
+        <div class="status-options">
+          <button
+            class="status-option approved"
+            (click)="updateStatus(RefundStatus.APPROVED)"
+            [disabled]="isUpdatingStatus"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+            </svg>
+            Approve
+          </button>
+
+          <button
+            class="status-option rejected"
+            (click)="updateStatus(RefundStatus.REJECTED)"
+            [disabled]="isUpdatingStatus"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path
+                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+              />
+            </svg>
+            Reject
+          </button>
+
+          <button
+            class="status-option completed"
+            (click)="updateStatus(RefundStatus.COMPLETED)"
+            [disabled]="isUpdatingStatus"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+              />
+            </svg>
+            Complete
+          </button>
+        </div>
+
+        <div *ngIf="isUpdatingStatus" class="updating-indicator">
+          <div class="spinner"></div>
+          <p>Updating status...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
