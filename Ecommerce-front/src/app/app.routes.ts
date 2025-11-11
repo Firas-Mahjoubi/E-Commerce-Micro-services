@@ -3,6 +3,7 @@ import { authGuard, guestGuard } from '@core/guards/auth.guard';
 import { AddVoucherComponent } from './features/voucher/add-voucher/add-voucher.component';
 import { sellerGuard, adminGuard } from '@core/guards/role.guard';
 import { ListVoucherComponent } from './features/voucher/list-voucher/list-voucher.component';
+import { VoucherStatsComponent } from './features/voucher/voucher-stats/voucher-stats.component';
 
 export const routes: Routes = [
   {
@@ -25,10 +26,6 @@ export const routes: Routes = [
     loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [authGuard]
   },
-    { path: 'addvoucher', component: AddVoucherComponent
-
-    },
-    { path: 'vouchers', component: ListVoucherComponent },
   {
     path: 'products',
     loadComponent: () => import('./features/products/products.component').then(m => m.ProductsComponent),
@@ -111,6 +108,16 @@ export const routes: Routes = [
       {
         path: 'reviews',
         loadComponent: () => import('./features/reviews/seller-reviews/seller-reviews.component').then(m => m.SellerReviewsComponent)
+        path: 'vouchers',
+        component: ListVoucherComponent
+      },
+      {
+        path: 'vouchers/add',
+        component: AddVoucherComponent
+      },
+      {
+        path: 'vouchers/stats',
+        component: VoucherStatsComponent
       }
     ]
   },

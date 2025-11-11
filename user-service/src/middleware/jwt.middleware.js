@@ -41,15 +41,9 @@ const verifyToken = (req, res, next) => {
 
   const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
-  // Accept both localhost and keycloak as valid issuers (for browser and container contexts)
-  const validIssuers = [
-    `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}`,
-    `http://localhost:8080/realms/${process.env.KEYCLOAK_REALM}`
-  ];
-
   jwt.verify(token, getKey, {
     audience: 'account',
-    issuer: validIssuers,
+    issuer: `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}`,
     algorithms: ['RS256']
   }, (err, decoded) => {
     if (err) {

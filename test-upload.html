@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Product Upload</title>
+</head>
+<body>
+    <h1>Test Product Image Upload</h1>
+    <input type="file" id="fileInput" multiple>
+    <button onclick="uploadImages()">Upload</button>
+    <div id="result"></div>
+
+    <script>
+        async function uploadImages() {
+            const token = prompt("Enter your JWT token:");
+            const files = document.getElementById('fileInput').files;
+            
+            if (!files.length) {
+                alert("Please select files");
+                return;
+            }
+
+            const formData = new FormData();
+            for (let file of files) {
+                formData.append('images', file);
+            }
+
+            try {
+                const response = await fetch('http://localhost:8090/api/product/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+                document.getElementById('result').innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<p style="color:red">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
