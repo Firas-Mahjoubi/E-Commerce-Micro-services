@@ -27,6 +27,8 @@ import { AuthService } from '@core/services/auth.service';
             <a routerLink="/seller/products" routerLinkActive="active">
               Products
             </a>
+            <a routerLink="/seller/reviews" routerLinkActive="active">
+              Reviews
             <a routerLink="/seller/vouchers" routerLinkActive="active">
               Vouchers
             </a>

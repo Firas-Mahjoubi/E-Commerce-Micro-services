@@ -36,20 +36,17 @@ public class ReviewService {
             throw new RuntimeException("Product not found");
         }
 
-        // If userId is provided, check for duplicate reviews and fetch user info
-        String userName = "Anonymous";
-        if (reviewRequest.getUserId() != null && !reviewRequest.getUserId().isEmpty()) {
-            // Fetch user info from user-service
-            UserResponse user;
-            try {
-                user = userClient.getUserById(reviewRequest.getUserId());
-                userName = user.getFirstName() + " " + user.getLastName();
-            } catch (Exception e) {
-                log.warn("User not found with id: {}, using Anonymous", reviewRequest.getUserId());
-                // Don't throw exception, just use Anonymous
-                userName = "Anonymous";
-            }
+        // Utiliser userName et userEmail depuis le request (envoyés par le frontend)
+        String userName = reviewRequest.getUserName();
+        String userEmail = reviewRequest.getUserEmail();
+        
+        // Si non fournis, utiliser "Anonymous"
+        if (userName == null || userName.isEmpty()) {
+            userName = "Anonymous";
+        }
 
+        // If userId is provided, check for duplicate reviews
+        if (reviewRequest.getUserId() != null && !reviewRequest.getUserId().isEmpty()) {
             // Check if user already reviewed this product
             List<Review> existingReviews = reviewRepository.findByProductId(reviewRequest.getProductId())
                     .stream()
@@ -65,6 +62,7 @@ public class ReviewService {
                 .productId(reviewRequest.getProductId())
                 .userId(reviewRequest.getUserId())
                 .userName(userName)
+                .userEmail(userEmail)
                 .rating(reviewRequest.getRating())
                 .title(reviewRequest.getTitle())
                 .comment(reviewRequest.getComment())
@@ -75,7 +73,10 @@ public class ReviewService {
 
         review = reviewRepository.save(review);
 
-        log.info("Review created for product {} by user {}", review.getProductId(), reviewRequest.getUserId() != null ? reviewRequest.getUserId() : "Anonymous");
+        log.info("Review created for product {} by user {} ({})", 
+                review.getProductId(), 
+                userName, 
+                userEmail != null ? userEmail : "no email");
 
         return mapToReviewResponse(review);
     }
@@ -133,11 +134,23 @@ public class ReviewService {
         review.setTitle(reviewRequest.getTitle());
         review.setComment(reviewRequest.getComment());
         review.setVerified(reviewRequest.getVerified() != null ? reviewRequest.getVerified() : review.getVerified());
+        
+        // Mettre à jour userName et userEmail si fournis
+        if (reviewRequest.getUserName() != null && !reviewRequest.getUserName().isEmpty()) {
+            review.setUserName(reviewRequest.getUserName());
+        }
+        if (reviewRequest.getUserEmail() != null && !reviewRequest.getUserEmail().isEmpty()) {
+            review.setUserEmail(reviewRequest.getUserEmail());
+        }
+        
         review.setUpdatedAt(LocalDateTime.now());
 
         review = reviewRepository.save(review);
 
-        log.info("Review {} updated", review.getId());
+        log.info("Review {} updated by {} ({})", 
+                review.getId(), 
+                review.getUserName(), 
+                review.getUserEmail());
 
         return mapToReviewResponse(review);
     }
@@ -434,6 +447,7 @@ public class ReviewService {
                 .id(review.getId())
                 .userId(review.getUserId())
                 .userName(review.getUserName())
+                .userEmail(review.getUserEmail())
                 .rating(review.getRating())
                 .title(review.getTitle())
                 .comment(review.getComment())

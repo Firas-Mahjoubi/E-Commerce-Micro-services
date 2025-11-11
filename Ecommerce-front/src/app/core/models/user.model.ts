@@ -11,6 +11,14 @@ export interface User {
   lastLogin?: string;
   createdAt?: string;
   updatedAt?: string;
+
+  // Keycloak token properties
+  sub?: string;                    // Subject (user ID) from Keycloak
+  preferred_username?: string;     // Username from Keycloak
+  name?: string;                   // Full name from Keycloak
+  given_name?: string;            // First name from Keycloak
+  family_name?: string;           // Last name from Keycloak
+  email_verified?: boolean;       // Email verification status
 }
 
 export interface LoginRequest {
