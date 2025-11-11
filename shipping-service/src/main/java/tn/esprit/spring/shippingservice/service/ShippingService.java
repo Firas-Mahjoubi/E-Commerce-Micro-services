@@ -19,6 +19,13 @@ public class ShippingService {
     public ShippingService(ShippingRepository shippingRepository) {
         this.shippingRepository = shippingRepository;
     }
+    public List<ShippingResponse> getAllShippings() {
+        return shippingRepository.findAll()
+                .stream()
+                .map(ShippingResponse::new)
+                .collect(Collectors.toList());
+    }
+
 
     public ShippingResponse createShipping(CreateShippingRequest request) {
         Shipping shipping = new Shipping();
@@ -52,4 +59,45 @@ public class ShippingService {
         response.setCreatedAt(shipping.getCreatedAt());
         return response;
     }
+
+    public void deleteShipping(Long id) {
+        if (!shippingRepository.existsById(id)) {
+            throw new RuntimeException("Shipping not found with ID " + id);
+        }
+        shippingRepository.deleteById(id);
+    }
+    public List<ShippingResponse> searchShippings(String address, String status) {
+        return shippingRepository.findAll()
+                .stream()
+                .filter(s -> {
+                    if (address != null && !address.isEmpty()) {
+                        return s.getAddress() != null &&
+                                s.getAddress().toLowerCase().contains(address.toLowerCase());
+                    }
+                    return true;
+                })
+                .filter(s -> {
+                    if (status != null && !status.isEmpty()) {
+                        return s.getStatus() != null &&
+                                s.getStatus().equalsIgnoreCase(status);
+                    }
+                    return true;
+                })
+                .map(ShippingResponse::new)
+                .collect(Collectors.toList());
+    }
+    public List<ShippingResponse> getAllShippingsSorted(String sortBy) {
+        return shippingRepository.findAll()
+                .stream()
+                .map(ShippingResponse::new)
+                .sorted((s1, s2) -> {
+                    if ("status".equalsIgnoreCase(sortBy)) {
+                        return s1.getStatus().compareToIgnoreCase(s2.getStatus());
+                    } else {
+                        return s1.getCreatedAt().compareTo(s2.getCreatedAt());
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
 }
