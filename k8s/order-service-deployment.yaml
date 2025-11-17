@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: order-service-config
+  namespace: ecommerce
+data:
+  SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+  SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/order-service?createDatabaseIfNotExist=true
+  SPRING_DATASOURCE_USERNAME: root
+  KAFKA_BOOTSTRAP_SERVERS: broker:29092
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: order-service-secret
+  namespace: ecommerce
+type: Opaque
+data:
+  SPRING_DATASOURCE_PASSWORD: cm9vdA== # base64 encoded "root"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: ecommerce
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      containers:
+      - name: order-service
+        image: firasmahjoubi/order-service:latest
+        ports:
+        - containerPort: 8093
+        envFrom:
+        - configMapRef:
+            name: order-service-config
+        - secretRef:
+            name: order-service-secret
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8093
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8093
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: ecommerce
+spec:
+  selector:
+    app: order-service
+  ports:
+  - port: 8093
+    targetPort: 8093
+  type: ClusterIP

@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: product-service-config
+  namespace: ecommerce
+data:
+  SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+  KAFKA_BOOTSTRAP_SERVERS: broker:29092
+  SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/product-service
+  SPRING_MAIL_HOST: smtp.gmail.com
+  SPRING_MAIL_PORT: "587"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: product-service-secret
+  namespace: ecommerce
+type: Opaque
+data:
+  # Add your base64 encoded email credentials
+  # SPRING_MAIL_USERNAME: <base64-encoded-email>
+  # SPRING_MAIL_PASSWORD: <base64-encoded-password>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  namespace: ecommerce
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: product-service
+  template:
+    metadata:
+      labels:
+        app: product-service
+    spec:
+      containers:
+      - name: product-service
+        image: firasmahjoubi/product-service:latest
+        ports:
+        - containerPort: 8092
+        envFrom:
+        - configMapRef:
+            name: product-service-config
+        - secretRef:
+            name: product-service-secret
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8092
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8092
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+  namespace: ecommerce
+spec:
+  selector:
+    app: product-service
+  ports:
+  - port: 8092
+    targetPort: 8092
+  type: ClusterIP
