@@ -1,9 +1,10 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '@core/services/auth.service';
 import { User } from '@core/models/user.model';
 import { HttpClient } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-profile',
@@ -12,10 +13,11 @@ import { HttpClient } from '@angular/common/http';
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.css']
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private http = inject(HttpClient);
+  private subscriptions = new Subscription();
 
   currentUser: User | null = null;
   profileForm!: FormGroup;
@@ -25,10 +27,16 @@ export class ProfileComponent implements OnInit {
   errorMessage = '';
 
   ngOnInit(): void {
-    this.authService.currentUser$.subscribe(user => {
-      this.currentUser = user;
-      this.initForm();
-    });
+    this.subscriptions.add(
+      this.authService.currentUser$.subscribe(user => {
+        this.currentUser = user;
+        this.initForm();
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   initForm(): void {

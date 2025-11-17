@@ -75,7 +75,7 @@ public class OrderResponse {
 
     public static class OrderItemResponse {
         private Long id;
-        private Long productId;
+        private String productId;
         private Integer quantity;
         private Double price;
         private Double totalPrice;
@@ -83,7 +83,7 @@ public class OrderResponse {
         // Constructeurs
         public OrderItemResponse() {}
 
-        public OrderItemResponse(Long id, Long productId, Integer quantity, Double price, Double totalPrice) {
+        public OrderItemResponse(Long id, String productId, Integer quantity, Double price, Double totalPrice) {
             this.id = id;
             this.productId = productId;
             this.quantity = quantity;
@@ -100,11 +100,11 @@ public class OrderResponse {
             this.id = id;
         }
 
-        public Long getProductId() {
+        public String getProductId() {
             return productId;
         }
 
-        public void setProductId(Long productId) {
+        public void setProductId(String productId) {
             this.productId = productId;
         }
 

@@ -66,9 +66,7 @@ export class CartComponent implements OnInit {
 
   proceedToCheckout(): void {
     if (this.cart.items.length > 0) {
-      alert('Checkout functionality will be implemented in the next phase!');
-      // TODO: Navigate to checkout page
-      // this.router.navigate(['/checkout']);
+      this.router.navigate(['/checkout']);
     }
   }
 

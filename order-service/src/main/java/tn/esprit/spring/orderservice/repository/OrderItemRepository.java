@@ -9,6 +9,6 @@ import java.util.List;
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
-    // Trouver les items par product ID
-    List<OrderItem> findByProductId(Long productId);
+    // Trouver les items par product ID (MongoDB ObjectId)
+    List<OrderItem> findByProductId(String productId);
 }

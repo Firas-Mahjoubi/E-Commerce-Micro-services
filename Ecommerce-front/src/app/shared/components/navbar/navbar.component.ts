@@ -1,9 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { CartService } from '@core/services/cart.service';
 import { User } from '@core/models/user.model';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-navbar',
@@ -12,10 +13,11 @@ import { User } from '@core/models/user.model';
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css']
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnDestroy {
   private authService = inject(AuthService);
   private cartService = inject(CartService);
   private router = inject(Router);
+  private subscriptions = new Subscription();
 
   currentUser: User | null = null;
   cartItemsCount = 0;
@@ -24,14 +26,22 @@ export class NavbarComponent {
 
   constructor() {
     // Subscribe to current user
-    this.authService.currentUser$.subscribe(user => {
-      this.currentUser = user;
-    });
+    this.subscriptions.add(
+      this.authService.currentUser$.subscribe(user => {
+        this.currentUser = user;
+      })
+    );
 
     // Subscribe to cart updates
-    this.cartService.cart$.subscribe(cart => {
-      this.cartItemsCount = cart.totalItems;
-    });
+    this.subscriptions.add(
+      this.cartService.cart$.subscribe(cart => {
+        this.cartItemsCount = cart.totalItems;
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   get userInitials(): string {
