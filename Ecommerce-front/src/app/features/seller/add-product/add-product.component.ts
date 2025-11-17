@@ -1,9 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '@core/services/auth.service';
+import { Subscription } from 'rxjs';
 
 interface AddProductRequest {
   name: string;
@@ -24,11 +25,12 @@ interface AddProductRequest {
   templateUrl: './add-product.component.html',
   styleUrls: ['./add-product.component.css']
 })
-export class AddProductComponent implements OnInit {
+export class AddProductComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private http = inject(HttpClient);
   private authService = inject(AuthService);
+  private subscriptions = new Subscription();
 
   productForm!: FormGroup;
   isSaving = false;
@@ -42,13 +44,19 @@ export class AddProductComponent implements OnInit {
 
   ngOnInit() {
     // Get seller ID from current user
-    this.authService.currentUser$.subscribe(user => {
-      if (user?.id) {
-        this.sellerId = user.id;
-      }
-    });
+    this.subscriptions.add(
+      this.authService.currentUser$.subscribe(user => {
+        if (user?.id) {
+          this.sellerId = user.id;
+        }
+      })
+    );
 
     this.initForm();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   initForm() {

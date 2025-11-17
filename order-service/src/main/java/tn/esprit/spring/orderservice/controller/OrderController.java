@@ -52,7 +52,6 @@ public class OrderController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
     /**
      * Récupérer toutes les commandes d'un client
      */

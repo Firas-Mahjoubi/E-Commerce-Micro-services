@@ -8,7 +8,7 @@ public class OrderItem {
 
     public OrderItem() {}
 
-    public OrderItem(Long productId, Integer quantity, Double price) {
+    public OrderItem(String productId, Integer quantity, Double price) {
         this.productId = productId;
         this.quantity = quantity;
         this.price = price;
@@ -18,7 +18,7 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long productId; // l'ID du produit
+    private String productId; // l'ID du produit (MongoDB ObjectId)
 
     private Integer quantity;
 
@@ -41,11 +41,11 @@ public class OrderItem {
         this.id = id;
     }
 
-    public Long getProductId() {
+    public String getProductId() {
         return productId;
     }
 
-    public void setProductId(Long productId) {
+    public void setProductId(String productId) {
         this.productId = productId;
     }
 

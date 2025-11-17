@@ -60,14 +60,18 @@ export class CheckoutComponent implements OnInit {
 
     // Convert cart items to order items
     const orderItems: OrderItem[] = this.cartItems.map(item => ({
-      productId: item.product.id,
+      productId: item.product.id, // Keep as string (MongoDB ObjectId)
       quantity: item.quantity,
       price: item.product.price
     }));
 
+    console.log('Order items:', orderItems);
+
     const orderRequest: CreateOrderRequest = {
       items: orderItems
     };
+
+    console.log('Order request:', JSON.stringify(orderRequest, null, 2));
 
     this.orderService.createOrder(orderRequest).subscribe({
       next: (response) => {

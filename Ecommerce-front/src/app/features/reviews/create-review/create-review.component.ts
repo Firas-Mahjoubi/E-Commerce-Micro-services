@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -7,6 +7,7 @@ import { AuthService } from '@core/services/auth.service';
 import { ProductService } from '@core/services/product.service';
 import { Product } from '@core/models/product.model';
 import { Review } from '@core/models/review.model';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-create-review',
@@ -15,7 +16,7 @@ import { Review } from '@core/models/review.model';
   templateUrl: './create-review.component.html',
   styleUrls: ['./create-review.component.css']
 })
-export class CreateReviewComponent implements OnInit {
+export class CreateReviewComponent implements OnInit, OnDestroy {
   reviewForm: FormGroup;
   productId: string = '';
   product: Product | null = null;
@@ -24,6 +25,7 @@ export class CreateReviewComponent implements OnInit {
   loading = false;
   error: string | null = null;
   success = false;
+  private subscriptions = new Subscription();
 
   // Pour la modification
   existingReview: Review | null = null;
@@ -55,6 +57,10 @@ export class CreateReviewComponent implements OnInit {
     } else {
       this.error = 'ID du produit non trouvé';
     }
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   /**
@@ -108,15 +114,17 @@ export class CreateReviewComponent implements OnInit {
       userEmail: ''
     };
   }  loadProduct(): void {
-    this.productService.getProductById(this.productId).subscribe({
-      next: (data) => {
-        this.product = data;
-      },
-      error: (err) => {
-        this.error = 'Impossible de charger le produit';
-        console.error(err);
-      }
-    });
+    this.subscriptions.add(
+      this.productService.getProductById(this.productId).subscribe({
+        next: (data) => {
+          this.product = data;
+        },
+        error: (err) => {
+          this.error = 'Impossible de charger le produit';
+          console.error(err);
+        }
+      })
+    );
   }
 
   /**
@@ -131,30 +139,32 @@ export class CreateReviewComponent implements OnInit {
       return;
     }
 
-    this.reviewService.getReviewsByProductId(this.productId).subscribe({
-      next: (reviews) => {
-        // Chercher un avis de cet utilisateur (comparaison flexible)
-        this.existingReview = reviews.find(r => {
-          return r.userId === userId ||
-                 r.userId === String(userId) ||
-                 String(r.userId) === String(userId);
-        }) || null;
+    this.subscriptions.add(
+      this.reviewService.getReviewsByProductId(this.productId).subscribe({
+        next: (reviews) => {
+          // Chercher un avis de cet utilisateur (comparaison flexible)
+          this.existingReview = reviews.find(r => {
+            return r.userId === userId ||
+                   r.userId === String(userId) ||
+                   String(r.userId) === String(userId);
+          }) || null;
 
-        if (this.existingReview) {
-          this.isEditMode = true;
+          if (this.existingReview) {
+            this.isEditMode = true;
 
-          // Pré-remplir le formulaire avec l'avis existant
-          this.reviewForm.patchValue({
-            rating: this.existingReview.rating,
-            title: this.existingReview.title,
-            comment: this.existingReview.comment
-          });
+            // Pré-remplir le formulaire avec l'avis existant
+            this.reviewForm.patchValue({
+              rating: this.existingReview.rating,
+              title: this.existingReview.title,
+              comment: this.existingReview.comment
+            });
+          }
+        },
+        error: (err) => {
+          console.error('❌ Erreur lors de la vérification de l\'avis existant:', err);
         }
-      },
-      error: (err) => {
-        console.error('❌ Erreur lors de la vérification de l\'avis existant:', err);
-      }
-    });
+      })
+    );
   }  setRating(rating: number): void {
     this.reviewForm.patchValue({ rating });
   }
@@ -209,20 +219,22 @@ export class CreateReviewComponent implements OnInit {
       ? this.reviewService.updateReview(this.existingReview.id, reviewRequest)
       : this.reviewService.createReview(reviewRequest);
 
-    apiCall.subscribe({
-      next: () => {
-        this.success = true;
-        this.loading = false;
-        setTimeout(() => {
-          this.router.navigate(['/products', this.productId]);
-        }, 2000);
-      },
-      error: (err) => {
-        this.error = err.error?.message || `Erreur lors de ${this.isEditMode ? 'la modification' : 'la création'} de l'avis`;
-        this.loading = false;
-        console.error('❌ Erreur soumission:', err);
-      }
-    });
+    this.subscriptions.add(
+      apiCall.subscribe({
+        next: () => {
+          this.success = true;
+          this.loading = false;
+          setTimeout(() => {
+            this.router.navigate(['/products', this.productId]);
+          }, 2000);
+        },
+        error: (err) => {
+          this.error = err.error?.message || `Erreur lors de ${this.isEditMode ? 'la modification' : 'la création'} de l'avis`;
+          this.loading = false;
+          console.error('❌ Erreur soumission:', err);
+        }
+      })
+    );
   }
 
   cancel(): void {

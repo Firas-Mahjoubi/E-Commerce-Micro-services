@@ -4,6 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { CreateOrderRequest, OrderResponse } from '@core/models/order.model';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -11,14 +12,13 @@ import { AuthService } from './auth.service';
 export class OrderService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
-  private apiUrl = 'http://localhost:8100/api/orders';
+  private apiUrl = `${environment.apiUrl}/orders`;
 
   /**
    * Create a new order
    */
   createOrder(orderRequest: CreateOrderRequest): Observable<OrderResponse> {
-    const headers = this.getHeaders();
-    return this.http.post<OrderResponse>(this.apiUrl, orderRequest, { headers })
+    return this.http.post<OrderResponse>(this.apiUrl, orderRequest)
       .pipe(
         catchError(this.handleError)
       );
@@ -29,12 +29,12 @@ export class OrderService {
    */
   getMyOrders(): Observable<OrderResponse[]> {
     const user = this.authService.getCurrentUserValue();
-    if (!user || !user.id) {
+    if (!user || !user.sub && !user.id) {
       return throwError(() => new Error('User not authenticated'));
     }
 
-    const headers = this.getHeaders();
-    return this.http.get<OrderResponse[]>(`${this.apiUrl}/customer/${user.id}`, { headers })
+    const customerId = user.sub || user.id;
+    return this.http.get<OrderResponse[]>(`${this.apiUrl}/customer/${customerId}`)
       .pipe(
         catchError(this.handleError)
       );
@@ -44,8 +44,7 @@ export class OrderService {
    * Get a specific order by ID
    */
   getOrderById(orderId: number): Observable<OrderResponse> {
-    const headers = this.getHeaders();
-    return this.http.get<OrderResponse>(`${this.apiUrl}/${orderId}`, { headers })
+    return this.http.get<OrderResponse>(`${this.apiUrl}/${orderId}`)
       .pipe(
         catchError(this.handleError)
       );
@@ -56,14 +55,13 @@ export class OrderService {
    */
   getOrderByIdAndCustomer(orderId: number): Observable<OrderResponse> {
     const user = this.authService.getCurrentUserValue();
-    if (!user || !user.id) {
+    if (!user || !user.sub && !user.id) {
       return throwError(() => new Error('User not authenticated'));
     }
 
-    const headers = this.getHeaders();
+    const customerId = user.sub || user.id;
     return this.http.get<OrderResponse>(
-      `${this.apiUrl}/${orderId}/customer/${user.id}`,
-      { headers }
+      `${this.apiUrl}/${orderId}/customer/${customerId}`
     ).pipe(
       catchError(this.handleError)
     );
@@ -73,11 +71,9 @@ export class OrderService {
    * Update order status
    */
   updateOrderStatus(orderId: number, status: string): Observable<OrderResponse> {
-    const headers = this.getHeaders();
     return this.http.put<OrderResponse>(
       `${this.apiUrl}/${orderId}/status?status=${status}`,
-      null,
-      { headers }
+      null
     ).pipe(
       catchError(this.handleError)
     );
@@ -88,29 +84,17 @@ export class OrderService {
    */
   cancelOrder(orderId: number): Observable<OrderResponse> {
     const user = this.authService.getCurrentUserValue();
-    if (!user || !user.id) {
+    if (!user || !user.sub && !user.id) {
       return throwError(() => new Error('User not authenticated'));
     }
 
-    const headers = this.getHeaders();
+    const customerId = user.sub || user.id;
     return this.http.put<OrderResponse>(
-      `${this.apiUrl}/${orderId}/cancel/customer/${user.id}`,
-      null,
-      { headers }
+      `${this.apiUrl}/${orderId}/cancel/customer/${customerId}`,
+      null
     ).pipe(
       catchError(this.handleError)
     );
-  }
-
-  /**
-   * Get authorization headers with JWT token
-   */
-  private getHeaders(): HttpHeaders {
-    const token = this.authService.getAccessToken();
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    });
   }
 
   /**

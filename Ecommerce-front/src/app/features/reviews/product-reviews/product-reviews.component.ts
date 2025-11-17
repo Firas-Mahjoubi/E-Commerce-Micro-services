@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ReviewService } from '@core/services/review.service';
 import { AuthService } from '@core/services/auth.service';
 import { Review, ReviewStatistics } from '@core/models/review.model';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-product-reviews',
@@ -13,7 +14,7 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './product-reviews.component.html',
   styleUrls: ['./product-reviews.component.css']
 })
-export class ProductReviewsComponent implements OnInit {
+export class ProductReviewsComponent implements OnInit, OnDestroy {
   productId: string = '';
   reviews: Review[] = [];
   filteredReviews: Review[] = [];
@@ -21,6 +22,7 @@ export class ProductReviewsComponent implements OnInit {
   loading = false;
   error: string | null = null;
   currentUser: any = null;
+  private subscriptions = new Subscription();
 
   // Filters
   selectedRating: number | null = null;
@@ -46,6 +48,10 @@ export class ProductReviewsComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
   loadReviews(): void {
     this.loading = true;
     this.error = null;
@@ -54,29 +60,33 @@ export class ProductReviewsComponent implements OnInit {
       ? this.reviewService.getVerifiedReviewsByProductId(this.productId)
       : this.reviewService.getReviewsByProductId(this.productId);
 
-    observable.subscribe({
-      next: (data) => {
-        this.reviews = data;
-        this.applyFilters();
-        this.loading = false;
-      },
-      error: (err) => {
-        this.error = 'Erreur lors du chargement des avis';
-        this.loading = false;
-        console.error(err);
-      }
-    });
+    this.subscriptions.add(
+      observable.subscribe({
+        next: (data) => {
+          this.reviews = data;
+          this.applyFilters();
+          this.loading = false;
+        },
+        error: (err) => {
+          this.error = 'Erreur lors du chargement des avis';
+          this.loading = false;
+          console.error(err);
+        }
+      })
+    );
   }
 
   loadStatistics(): void {
-    this.reviewService.getReviewStatistics(this.productId).subscribe({
-      next: (data) => {
-        this.statistics = data;
-      },
-      error: (err) => {
-        console.error('Erreur lors du chargement des statistiques', err);
-      }
-    });
+    this.subscriptions.add(
+      this.reviewService.getReviewStatistics(this.productId).subscribe({
+        next: (data) => {
+          this.statistics = data;
+        },
+        error: (err) => {
+          console.error('Erreur lors du chargement des statistiques', err);
+        }
+      })
+    );
   }
 
   applyFilters(): void {

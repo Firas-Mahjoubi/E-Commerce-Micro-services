@@ -42,13 +42,23 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'checkout',
+    loadComponent: () => import('./features/checkout/checkout.component').then(m => m.CheckoutComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'profile',
     loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent),
     canActivate: [authGuard]
   },
   {
     path: 'orders',
-    loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
+    loadComponent: () => import('./features/orders/orders.component').then(m => m.OrdersComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'orders/:id',
+    loadComponent: () => import('./features/orders/order-detail/order-detail.component').then(m => m.OrderDetailComponent),
     canActivate: [authGuard]
   },
   // Review Routes (Customer)
@@ -108,6 +118,8 @@ export const routes: Routes = [
       {
         path: 'reviews',
         loadComponent: () => import('./features/reviews/seller-reviews/seller-reviews.component').then(m => m.SellerReviewsComponent)
+      },
+      {
         path: 'vouchers',
         component: ListVoucherComponent
       },

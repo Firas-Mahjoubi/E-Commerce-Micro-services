@@ -113,16 +113,48 @@ public class ProductController {
                 return ResponseEntity.ok(product);
             }
 
-            String sellerId = extractSellerIdFromToken(request);
-
-            // ✅ If authenticated, seller can only view their own products
-            if (!product.getSellerId().equals(sellerId)) {
-                System.out.println("🚫 Access denied - Product belongs to seller: " + product.getSellerId() +
-                        ", but requester is: " + sellerId);
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build(); // 403 Forbidden
+            // ✅ Extract token to check user role
+            try {
+                String token = authHeader.substring(7);
+                String[] chunks = token.split("\\.");
+                if (chunks.length == 3) {
+                    Base64.Decoder decoder = Base64.getUrlDecoder();
+                    String payload = new String(decoder.decode(chunks[1]));
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode jsonNode = mapper.readTree(payload);
+                    
+                    // Check if user has SELLER role
+                    JsonNode realmAccessNode = jsonNode.get("realm_access");
+                    boolean isSeller = false;
+                    if (realmAccessNode != null && realmAccessNode.has("roles")) {
+                        JsonNode rolesNode = realmAccessNode.get("roles");
+                        if (rolesNode.isArray()) {
+                            for (JsonNode role : rolesNode) {
+                                if ("SELLER".equals(role.asText())) {
+                                    isSeller = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // ✅ If user is a SELLER, check if they own the product
+                    if (isSeller) {
+                        String sellerId = jsonNode.get("sub").asText();
+                        if (!product.getSellerId().equals(sellerId)) {
+                            System.out.println("🚫 Access denied - Seller trying to view another seller's product");
+                            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                        }
+                    }
+                    
+                    // ✅ If user is a CUSTOMER or ADMIN, allow access to any product
+                    System.out.println("✅ Access granted - User can view product");
+                }
+            } catch (Exception e) {
+                // If token parsing fails, still allow access (treat as public)
+                System.out.println("⚠️ Token parsing error, allowing public access: " + e.getMessage());
             }
 
-            System.out.println("✅ Access granted - Seller viewing their own product");
             return ResponseEntity.ok(product);
 
         } catch (RuntimeException e) {

@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-seller-navbar',
@@ -29,6 +30,7 @@ import { AuthService } from '@core/services/auth.service';
             </a>
             <a routerLink="/seller/reviews" routerLinkActive="active">
               Reviews
+            </a>
             <a routerLink="/seller/vouchers" routerLinkActive="active">
               Vouchers
             </a>
@@ -256,10 +258,11 @@ import { AuthService } from '@core/services/auth.service';
     }
   `]
 })
-export class SellerNavbarComponent implements OnInit {
+export class SellerNavbarComponent implements OnInit, OnDestroy {
   sellerName = 'Seller';
   sellerInitials = 'S';
   isDropdownOpen = false;
+  private subscriptions = new Subscription();
 
   constructor(
     private authService: AuthService,
@@ -267,12 +270,18 @@ export class SellerNavbarComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.authService.currentUser$.subscribe(user => {
-      if (user) {
-        this.sellerName = user.firstName || user.username || 'Seller';
-        this.sellerInitials = this.getInitials(this.sellerName);
-      }
-    });
+    this.subscriptions.add(
+      this.authService.currentUser$.subscribe(user => {
+        if (user) {
+          this.sellerName = user.firstName || user.username || 'Seller';
+          this.sellerInitials = this.getInitials(this.sellerName);
+        }
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   getInitials(name: string): string {

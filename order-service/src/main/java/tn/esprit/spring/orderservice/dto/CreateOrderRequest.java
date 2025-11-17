@@ -43,8 +43,8 @@ public class CreateOrderRequest {
     public static class OrderItemRequest {
         
         @NotNull(message = "Product ID is required")
-        @Positive(message = "Product ID must be positive")
-        private Long productId;
+        @NotEmpty(message = "Product ID cannot be empty")
+        private String productId;
 
         @NotNull(message = "Quantity is required")
         @Positive(message = "Quantity must be positive")
@@ -57,18 +57,18 @@ public class CreateOrderRequest {
         // Constructeurs
         public OrderItemRequest() {}
 
-        public OrderItemRequest(Long productId, Integer quantity, Double price) {
+        public OrderItemRequest(String productId, Integer quantity, Double price) {
             this.productId = productId;
             this.quantity = quantity;
             this.price = price;
         }
 
         // Getters et Setters
-        public Long getProductId() {
+        public String getProductId() {
             return productId;
         }
 
-        public void setProductId(Long productId) {
+        public void setProductId(String productId) {
             this.productId = productId;
         }
 
