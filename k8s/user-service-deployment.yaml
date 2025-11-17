@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-service-config
+  namespace: ecommerce
+data:
+  NODE_ENV: production
+  PORT: "3000"
+  KEYCLOAK_URL: http://keycloak:8080
+  KEYCLOAK_REALM: Ecommerce
+  KEYCLOAK_CLIENT_ID: ecommerce-user-service
+  KEYCLOAK_ADMIN_USERNAME: admin
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_NAME: keycloak
+  DB_USER: keycloak
+  EUREKA_URL: http://eureka-server:8761/eureka
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: user-service-secret
+  namespace: ecommerce
+type: Opaque
+data:
+  KEYCLOAK_CLIENT_SECRET: SU1lYXN4VERQVUZGOEYxR1NseDBzVzR0NmJJb1VvaDU= # base64 encoded
+  KEYCLOAK_ADMIN_PASSWORD: YWRtaW4= # base64 encoded "admin"
+  DB_PASSWORD: cGFzc3dvcmQ= # base64 encoded "password"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: ecommerce
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+      - name: user-service
+        image: firasmahjoubi/user-service:latest
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - configMapRef:
+            name: user-service-config
+        - secretRef:
+            name: user-service-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: ecommerce
+spec:
+  selector:
+    app: user-service
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: ClusterIP
